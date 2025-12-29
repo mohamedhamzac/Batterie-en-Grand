@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Batterie en Grand</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body onclick="toggleFullscreen()">
+
+  <div class="container">
+
+    <!-- Batterie gauche (charge) -->
+    <div class="battery-left">
+      <div id="leftFill" class="fill-left"></div>
+      <div id="bolt" class="bolt">⚡</div>
+    </div>
+
+    <!-- Pourcentage -->
+    <div id="percent" class="percent">--%</div>
+
+    <!-- Batterie droite (niveau) -->
+    <div class="battery-right">
+      <div id="rightFill" class="fill-right"></div>
+    </div>
+
+  </div>
+
+  <div class="hint">Clique pour plein écran</div>
+
+  <script src="script.js"></script>
+</body>
+</html>
