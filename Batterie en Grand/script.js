@@ -1,4 +1,6 @@
 function toggleFullscreen() {
+  removeHashFromUrl();
+
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
   } else {
@@ -241,7 +243,11 @@ document.body.addEventListener("click", event => {
 });
 
 document.addEventListener("fullscreenchange", removeHashFromUrl);
+document.addEventListener("DOMContentLoaded", removeHashFromUrl);
+window.addEventListener("load", removeHashFromUrl);
+window.addEventListener("pageshow", removeHashFromUrl);
 window.addEventListener("hashchange", removeHashFromUrl);
+window.addEventListener("popstate", removeHashFromUrl);
 
 renderTimezoneOptions();
 removeHashFromUrl();
