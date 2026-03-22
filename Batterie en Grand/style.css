@@ -11,6 +11,32 @@ body {
   overflow: hidden;
 }
 
+.brand-mark {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+  z-index: 20;
+}
+
+.brand-mark img {
+  width: 54px;
+  height: 54px;
+  display: block;
+  filter: drop-shadow(0 0 18px rgba(34, 197, 94, 0.2));
+}
+
+.brand-mark span {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .container {
   display: flex;
   align-items: center;
@@ -255,6 +281,11 @@ body {
   pointer-events: none;
 }
 
+:fullscreen .brand-mark,
+:-webkit-full-screen .brand-mark {
+  opacity: 0.24;
+}
+
 .timezone-select {
   width: 100%;
   padding: 10px 14px;
@@ -292,6 +323,22 @@ body {
     min-height: 100vh;
     padding: 24px 0 90px;
     overflow: auto;
+  }
+
+  .brand-mark {
+    top: 12px;
+    left: 12px;
+    gap: 10px;
+  }
+
+  .brand-mark img {
+    width: 46px;
+    height: 46px;
+  }
+
+  .brand-mark span {
+    font-size: 12px;
+    letter-spacing: 0.1em;
   }
 
   .container,

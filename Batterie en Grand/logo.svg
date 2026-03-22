@@ -1,0 +1,30 @@
+<svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="36" y1="28" x2="184" y2="196" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="68" y1="52" x2="151" y2="164" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="white" stop-opacity="0.18"/>
+    </linearGradient>
+    <linearGradient id="charge" x1="90" y1="82" x2="134" y2="158" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#34D399"/>
+      <stop offset="1" stop-color="#16A34A"/>
+    </linearGradient>
+    <filter id="glow" x="0" y="0" width="220" height="220" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur_1_2"/>
+    </filter>
+  </defs>
+  <circle cx="110" cy="110" r="78" fill="url(#bg)" fill-opacity="0.14"/>
+  <circle cx="110" cy="110" r="66" stroke="url(#bg)" stroke-opacity="0.42" stroke-width="2"/>
+  <g filter="url(#glow)">
+    <rect x="66" y="52" width="88" height="116" rx="22" fill="#071224"/>
+    <rect x="66" y="52" width="88" height="116" rx="22" stroke="url(#glass)" stroke-width="6"/>
+    <rect x="94" y="40" width="32" height="10" rx="5" fill="#E2E8F0"/>
+    <path d="M80 138C80 131.373 85.3726 126 92 126H128C134.627 126 140 131.373 140 138V146C140 152.627 134.627 158 128 158H92C85.3726 158 80 152.627 80 146V138Z" fill="url(#charge)"/>
+    <path d="M114.202 73L96 111.43H109.907L105.798 147L124 108.57H110.093L114.202 73Z" fill="#F8FAFC"/>
+  </g>
+</svg>
