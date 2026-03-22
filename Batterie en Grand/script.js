@@ -184,13 +184,27 @@ function getCurrentReferenceDate() {
   return new Date();
 }
 
+function getUtcOffsetLabel(zone) {
+  if (zone === WORLD_TIME_ZONE) {
+    return "UTC+0";
+  }
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: zone,
+    timeZoneName: "shortOffset"
+  }).formatToParts(getCurrentReferenceDate());
+
+  const zoneNamePart = parts.find(part => part.type === "timeZoneName")?.value || "GMT+0";
+  return zoneNamePart.replace("GMT", "UTC");
+}
+
 function renderTimezoneOptions() {
   timezoneSelect.innerHTML = "";
 
   countries.forEach(country => {
     const option = document.createElement("option");
     option.value = country.zone;
-    option.textContent = country.name;
+    option.textContent = `${country.name} - ${getUtcOffsetLabel(country.zone)}`;
 
     if (country.zone === activeZone) {
       option.selected = true;
@@ -240,6 +254,7 @@ async function syncTimeFromWorldService() {
 
       syncedUtcMs = parsedUtcMs;
       syncedAtPerfMs = performance.now();
+      renderTimezoneOptions();
       updateClock();
     })
     .catch(() => {
