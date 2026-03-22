@@ -187,6 +187,14 @@ function updateClock() {
   clockLabel.textContent = getClockLabel(activeCountry.name);
 }
 
+function getBatteryColor(level) {
+  if (level >= 80) return "#22c55e";
+  if (level >= 50) return "#facc15";
+  if (level > 35) return "#fb923c";
+  if (level >= 15) return "#dc2626";
+  return "#7f1d1d";
+}
+
 timezoneSelect.addEventListener("change", event => {
   activeCountry = countries.find(country => country.zone === event.target.value) || countries[0];
   activeZone = activeCountry.zone;
@@ -232,37 +240,25 @@ if ('getBattery' in navigator) {
       const leftFill = document.getElementById("leftFill");
       const rightFill = document.getElementById("rightFill");
       const bolt = document.getElementById("bolt");
+      const batteryColor = getBatteryColor(level);
 
       // ===== Si ça charge =====
       if (battery.charging) {
         leftFill.style.background = "#22c55e";
         bolt.style.display = "flex";
-        percent.style.color = "#22c55e"; // % toujours vert
+        percent.style.color = "#22c55e";
+        percent.classList.remove("low-battery-alert");
       } else {
-        leftFill.style.background = "#ef4444";
+        leftFill.style.background = batteryColor;
         bolt.style.display = "none";
-
-        // Couleur du % selon niveau
-        let color = "#000000";
-        if (level > 80) color = "#15803d";
-        else if (level > 60) color = "#facc15";
-        else if (level > 30) color = "#fb923c";
-        else if (level > 10) color = "#dc2626";
-
-        percent.style.color = color;
+        percent.style.color = batteryColor;
+        percent.classList.toggle("low-battery-alert", level < 15);
       }
 
       // ===== Batterie droite =====
       rightFill.style.height = level + "%";
-
-      let rightColor = "#000000";
-      if (level > 80) rightColor = "#15803d";
-      else if (level > 60) rightColor = "#facc15";
-      else if (level > 30) rightColor = "#fb923c";
-      else if (level > 10) rightColor = "#dc2626";
-
-      rightFill.style.background = rightColor;
-      rightBubbles.style.setProperty("--bubble-color", rightColor);
+      rightFill.style.background = batteryColor;
+      rightBubbles.style.setProperty("--bubble-color", batteryColor);
     }
 
     updateBattery();

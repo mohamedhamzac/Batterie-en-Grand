@@ -63,6 +63,25 @@ body {
   transition: color 0.4s ease;
 }
 
+.percent.low-battery-alert {
+  animation: batteryBlink 1s ease-in-out infinite;
+}
+
+@keyframes batteryBlink {
+  0% {
+    color: #7f1d1d;
+    text-shadow: 0 0 16px rgba(127, 29, 29, 0.7);
+  }
+  50% {
+    color: #ef4444;
+    text-shadow: 0 0 28px rgba(239, 68, 68, 0.95);
+  }
+  100% {
+    color: #7f1d1d;
+    text-shadow: 0 0 16px rgba(127, 29, 29, 0.7);
+  }
+}
+
 /* ===== Batterie gauche (horizontale) ===== */
 .battery-left {
   width: 170px;
