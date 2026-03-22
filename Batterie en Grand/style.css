@@ -283,7 +283,8 @@ body {
 
 :fullscreen .brand-mark,
 :-webkit-full-screen .brand-mark {
-  opacity: 0.24;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .timezone-select {
