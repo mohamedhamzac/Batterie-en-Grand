@@ -6,6 +6,221 @@ function toggleFullscreen() {
   }
 }
 
+const clockTime = document.getElementById("clockTime");
+const clockLabel = document.getElementById("clockLabel");
+const timezoneSelect = document.getElementById("timezoneSelect");
+const timezonePicker = document.querySelector(".timezone-picker");
+const rightBubbles = document.getElementById("rightBubbles");
+
+const countries = [
+  { name: "Afghanistan", zone: "Asia/Kabul" },
+  { name: "Afrique du Sud", zone: "Africa/Johannesburg" },
+  { name: "Albanie", zone: "Europe/Tirane" },
+  { name: "Algerie", zone: "Africa/Algiers" },
+  { name: "Allemagne", zone: "Europe/Berlin" },
+  { name: "Andorre", zone: "Europe/Andorra" },
+  { name: "Angola", zone: "Africa/Luanda" },
+  { name: "Arabie saoudite", zone: "Asia/Riyadh" },
+  { name: "Argentine", zone: "America/Argentina/Buenos_Aires" },
+  { name: "Armenie", zone: "Asia/Yerevan" },
+  { name: "Australie", zone: "Australia/Sydney" },
+  { name: "Autriche", zone: "Europe/Vienna" },
+  { name: "Azerbaidjan", zone: "Asia/Baku" },
+  { name: "Bahrein", zone: "Asia/Bahrain" },
+  { name: "Bangladesh", zone: "Asia/Dhaka" },
+  { name: "Belgique", zone: "Europe/Brussels" },
+  { name: "Benin", zone: "Africa/Porto-Novo" },
+  { name: "Bielorussie", zone: "Europe/Minsk" },
+  { name: "Bolivie", zone: "America/La_Paz" },
+  { name: "Bosnie-Herzegovine", zone: "Europe/Sarajevo" },
+  { name: "Botswana", zone: "Africa/Gaborone" },
+  { name: "Bresil", zone: "America/Sao_Paulo" },
+  { name: "Bulgarie", zone: "Europe/Sofia" },
+  { name: "Burkina Faso", zone: "Africa/Ouagadougou" },
+  { name: "Cambodge", zone: "Asia/Phnom_Penh" },
+  { name: "Cameroun", zone: "Africa/Douala" },
+  { name: "Canada", zone: "America/Toronto" },
+  { name: "Chili", zone: "America/Santiago" },
+  { name: "Chine", zone: "Asia/Shanghai" },
+  { name: "Chypre", zone: "Asia/Nicosia" },
+  { name: "Colombie", zone: "America/Bogota" },
+  { name: "Coree du Nord", zone: "Asia/Pyongyang" },
+  { name: "Coree du Sud", zone: "Asia/Seoul" },
+  { name: "Costa Rica", zone: "America/Costa_Rica" },
+  { name: "Cote d'Ivoire", zone: "Africa/Abidjan" },
+  { name: "Croatie", zone: "Europe/Zagreb" },
+  { name: "Cuba", zone: "America/Havana" },
+  { name: "Danemark", zone: "Europe/Copenhagen" },
+  { name: "Egypte", zone: "Africa/Cairo" },
+  { name: "Emirats arabes unis", zone: "Asia/Dubai" },
+  { name: "Equateur", zone: "America/Guayaquil" },
+  { name: "Espagne", zone: "Europe/Madrid" },
+  { name: "Estonie", zone: "Europe/Tallinn" },
+  { name: "Etats-Unis", zone: "America/New_York" },
+  { name: "Ethiopie", zone: "Africa/Addis_Ababa" },
+  { name: "Finlande", zone: "Europe/Helsinki" },
+  { name: "France", zone: "Europe/Paris" },
+  { name: "Gabon", zone: "Africa/Libreville" },
+  { name: "Georgie", zone: "Asia/Tbilisi" },
+  { name: "Ghana", zone: "Africa/Accra" },
+  { name: "Grece", zone: "Europe/Athens" },
+  { name: "Guatemala", zone: "America/Guatemala" },
+  { name: "Guinee", zone: "Africa/Conakry" },
+  { name: "Haiti", zone: "America/Port-au-Prince" },
+  { name: "Honduras", zone: "America/Tegucigalpa" },
+  { name: "Hongrie", zone: "Europe/Budapest" },
+  { name: "Inde", zone: "Asia/Kolkata" },
+  { name: "Indonesie", zone: "Asia/Jakarta" },
+  { name: "Irak", zone: "Asia/Baghdad" },
+  { name: "Iran", zone: "Asia/Tehran" },
+  { name: "Irlande", zone: "Europe/Dublin" },
+  { name: "Islande", zone: "Atlantic/Reykjavik" },
+  { name: "Israel", zone: "Asia/Jerusalem" },
+  { name: "Italie", zone: "Europe/Rome" },
+  { name: "Jamaïque", zone: "America/Jamaica" },
+  { name: "Japon", zone: "Asia/Tokyo" },
+  { name: "Jordanie", zone: "Asia/Amman" },
+  { name: "Kazakhstan", zone: "Asia/Almaty" },
+  { name: "Kenya", zone: "Africa/Nairobi" },
+  { name: "Koweit", zone: "Asia/Kuwait" },
+  { name: "Laos", zone: "Asia/Vientiane" },
+  { name: "Lettonie", zone: "Europe/Riga" },
+  { name: "Liban", zone: "Asia/Beirut" },
+  { name: "Libye", zone: "Africa/Tripoli" },
+  { name: "Lituanie", zone: "Europe/Vilnius" },
+  { name: "Luxembourg", zone: "Europe/Luxembourg" },
+  { name: "Madagascar", zone: "Indian/Antananarivo" },
+  { name: "Malaisie", zone: "Asia/Kuala_Lumpur" },
+  { name: "Mali", zone: "Africa/Bamako" },
+  { name: "Maroc", zone: "Africa/Casablanca" },
+  { name: "Mexique", zone: "America/Mexico_City" },
+  { name: "Monaco", zone: "Europe/Monaco" },
+  { name: "Mongolie", zone: "Asia/Ulaanbaatar" },
+  { name: "Mozambique", zone: "Africa/Maputo" },
+  { name: "Namibie", zone: "Africa/Windhoek" },
+  { name: "Nepal", zone: "Asia/Kathmandu" },
+  { name: "Niger", zone: "Africa/Niamey" },
+  { name: "Nigeria", zone: "Africa/Lagos" },
+  { name: "Norvege", zone: "Europe/Oslo" },
+  { name: "Nouvelle-Zelande", zone: "Pacific/Auckland" },
+  { name: "Oman", zone: "Asia/Muscat" },
+  { name: "Ouganda", zone: "Africa/Kampala" },
+  { name: "Pakistan", zone: "Asia/Karachi" },
+  { name: "Panama", zone: "America/Panama" },
+  { name: "Paraguay", zone: "America/Asuncion" },
+  { name: "Pays-Bas", zone: "Europe/Amsterdam" },
+  { name: "Perou", zone: "America/Lima" },
+  { name: "Philippines", zone: "Asia/Manila" },
+  { name: "Pologne", zone: "Europe/Warsaw" },
+  { name: "Portugal", zone: "Europe/Lisbon" },
+  { name: "Qatar", zone: "Asia/Qatar" },
+  { name: "Republique tcheque", zone: "Europe/Prague" },
+  { name: "Republique dominicaine", zone: "America/Santo_Domingo" },
+  { name: "Roumanie", zone: "Europe/Bucharest" },
+  { name: "Royaume-Uni", zone: "Europe/London" },
+  { name: "Russie", zone: "Europe/Moscow" },
+  { name: "Rwanda", zone: "Africa/Kigali" },
+  { name: "Senegal", zone: "Africa/Dakar" },
+  { name: "Serbie", zone: "Europe/Belgrade" },
+  { name: "Singapour", zone: "Asia/Singapore" },
+  { name: "Slovaquie", zone: "Europe/Bratislava" },
+  { name: "Slovenie", zone: "Europe/Ljubljana" },
+  { name: "Somalie", zone: "Africa/Mogadishu" },
+  { name: "Soudan", zone: "Africa/Khartoum" },
+  { name: "Sri Lanka", zone: "Asia/Colombo" },
+  { name: "Suede", zone: "Europe/Stockholm" },
+  { name: "Suisse", zone: "Europe/Zurich" },
+  { name: "Syrie", zone: "Asia/Damascus" },
+  { name: "Taiwan", zone: "Asia/Taipei" },
+  { name: "Tanzanie", zone: "Africa/Dar_es_Salaam" },
+  { name: "Tchad", zone: "Africa/Ndjamena" },
+  { name: "Thailande", zone: "Asia/Bangkok" },
+  { name: "Tunisie", zone: "Africa/Tunis" },
+  { name: "Turquie", zone: "Europe/Istanbul" },
+  { name: "Ukraine", zone: "Europe/Kyiv" },
+  { name: "Uruguay", zone: "America/Montevideo" },
+  { name: "Venezuela", zone: "America/Caracas" },
+  { name: "Vietnam", zone: "Asia/Ho_Chi_Minh" },
+  { name: "Yemen", zone: "Asia/Aden" },
+  { name: "Zambie", zone: "Africa/Lusaka" },
+  { name: "Zimbabwe", zone: "Africa/Harare" }
+];
+
+let activeCountry = countries.find(country => (
+  country.zone === Intl.DateTimeFormat().resolvedOptions().timeZone
+)) || countries.find(country => country.name === "France") || countries[0];
+
+let activeZone = activeCountry.zone;
+
+function getClockLabel(countryName) {
+  return `HEURE ACTUELLE - ${countryName.toUpperCase()}`;
+}
+
+function renderTimezoneOptions() {
+  timezoneSelect.innerHTML = "";
+
+  countries.forEach(country => {
+    const option = document.createElement("option");
+    option.value = country.zone;
+    option.textContent = country.name;
+
+    if (country.zone === activeZone) {
+      option.selected = true;
+    }
+
+    timezoneSelect.appendChild(option);
+  });
+}
+
+function formatTime(zone) {
+  return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: zone,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).format(new Date());
+}
+
+function updateClock() {
+  clockTime.textContent = formatTime(activeZone);
+  clockLabel.textContent = getClockLabel(activeCountry.name);
+}
+
+timezoneSelect.addEventListener("change", event => {
+  activeCountry = countries.find(country => country.zone === event.target.value) || countries[0];
+  activeZone = activeCountry.zone;
+  updateClock();
+  setTimeout(() => {
+    timezoneSelect.blur();
+    document.body.focus();
+  }, 0);
+});
+
+["pointerdown", "mousedown", "click", "touchstart"].forEach(eventName => {
+  timezonePicker.addEventListener(eventName, event => {
+    event.stopPropagation();
+  });
+});
+
+document.body.addEventListener("click", event => {
+  if (event.target.closest(".timezone-picker")) {
+    return;
+  }
+
+  toggleFullscreen();
+});
+
+renderTimezoneOptions();
+updateClock();
+setInterval(updateClock, 1000);
+
+for (let index = 0; index < 6; index += 1) {
+  const bubble = document.createElement("span");
+  bubble.className = "battery-bubble";
+  rightBubbles.appendChild(bubble);
+}
+
 if ('getBattery' in navigator) {
   navigator.getBattery().then(battery => {
 
@@ -47,6 +262,7 @@ if ('getBattery' in navigator) {
       else if (level > 10) rightColor = "#dc2626";
 
       rightFill.style.background = rightColor;
+      rightBubbles.style.setProperty("--bubble-color", rightColor);
     }
 
     updateBattery();

@@ -5,16 +5,29 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   color: white;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .container {
   display: flex;
   align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  width: min(1200px, calc(100vw - 48px));
+}
+
+.battery-panel {
+  display: flex;
+  align-items: center;
+  align-content: flex-start;
+  justify-content: center;
   gap: 50px;
   flex-wrap: wrap;
+  position: relative;
 }
 
 .percent {
@@ -75,6 +88,8 @@ body {
   border-radius: 10px;
   position: relative;
   overflow: hidden;
+  background: #020617;
+  isolation: isolate;
 }
 
 .battery-right::after {
@@ -91,13 +106,220 @@ body {
 .fill-right {
   position: absolute;
   bottom: 0;
+  left: 0;
   width: 100%;
   transition: height 0.6s ease, background 0.4s ease;
+  z-index: 1;
+}
+
+.battery-bubbles {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+  mask-image: linear-gradient(180deg, transparent 0%, black 18%, black 100%);
+}
+
+.battery-bubble {
+  position: absolute;
+  bottom: -18px;
+  border-radius: 999px;
+  background: var(--bubble-color, rgba(255, 255, 255, 0.5));
+  opacity: 0.88;
+  filter: blur(0.4px);
+  animation-name: bubbleRise;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.battery-bubble:nth-child(1) {
+  left: 14%;
+  width: 12px;
+  height: 12px;
+  animation-duration: 3.6s;
+  animation-delay: 0.1s;
+}
+
+.battery-bubble:nth-child(2) {
+  left: 34%;
+  width: 9px;
+  height: 9px;
+  animation-duration: 3s;
+  animation-delay: 1.2s;
+}
+
+.battery-bubble:nth-child(3) {
+  left: 54%;
+  width: 14px;
+  height: 14px;
+  animation-duration: 4.2s;
+  animation-delay: 0.7s;
+}
+
+.battery-bubble:nth-child(4) {
+  left: 72%;
+  width: 10px;
+  height: 10px;
+  animation-duration: 3.4s;
+  animation-delay: 1.7s;
+}
+
+.battery-bubble:nth-child(5) {
+  left: 24%;
+  width: 7px;
+  height: 7px;
+  animation-duration: 2.8s;
+  animation-delay: 2.1s;
+}
+
+.battery-bubble:nth-child(6) {
+  left: 62%;
+  width: 8px;
+  height: 8px;
+  animation-duration: 3.1s;
+  animation-delay: 2.5s;
+}
+
+@keyframes bubbleRise {
+  0% {
+    transform: translateY(0) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-182px) scale(1.2);
+    opacity: 0;
+  }
+}
+
+
+.clock-panel {
+  position: absolute;
+  top: -84px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: min(420px, calc(100vw - 40px));
+}
+
+.clock-label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.clock-time {
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-shadow: 0 0 16px rgba(96, 165, 250, 0.35);
+}
+
+.timezone-picker {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: min(320px, calc(100vw - 32px));
+  z-index: 20;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+:fullscreen .timezone-picker {
+  top: 28px;
+  right: 28px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+:-webkit-full-screen .timezone-picker {
+  top: 28px;
+  right: 28px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.timezone-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.88);
+  color: white;
+  font-size: 14px;
+  text-align: center;
+  outline: none;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.timezone-select:focus {
+  border-color: rgba(96, 165, 250, 0.9);
+}
+
+.hint-group {
+  position: fixed;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .hint {
-  position: fixed;
-  bottom: 10px;
   opacity: 0.5;
   font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  body {
+    height: auto;
+    min-height: 100vh;
+    padding: 24px 0 90px;
+    overflow: auto;
+  }
+
+  .container,
+  .battery-panel {
+    gap: 28px;
+  }
+
+  .battery-panel {
+    margin-top: 24px;
+  }
+
+  .timezone-select {
+    width: 100%;
+  }
+
+  .timezone-picker {
+    top: 12px;
+    right: 12px;
+    width: min(280px, calc(100vw - 24px));
+  }
+
+  :fullscreen .timezone-picker {
+    top: 20px;
+    right: 12px;
+  }
+
+  :-webkit-full-screen .timezone-picker {
+    top: 20px;
+    right: 12px;
+  }
 }

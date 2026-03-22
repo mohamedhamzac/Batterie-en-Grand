@@ -6,27 +6,39 @@
   <link rel="stylesheet" href="style.css">
 </head>
 
-<body onclick="toggleFullscreen()">
+<body>
 
   <div class="container">
+    <div class="battery-panel">
+      <section class="clock-panel">
+        <p id="clockLabel" class="clock-label">Heure actuelle</p>
+        <div id="clockTime" class="clock-time">--:--:--</div>
+      </section>
 
-    <!-- Batterie gauche (charge) -->
-    <div class="battery-left">
-      <div id="leftFill" class="fill-left"></div>
-      <div id="bolt" class="bolt">⚡</div>
+      <!-- Batterie gauche (charge) -->
+      <div class="battery-left">
+        <div id="leftFill" class="fill-left"></div>
+        <div id="bolt" class="bolt">⚡</div>
+      </div>
+
+      <!-- Pourcentage -->
+      <div id="percent" class="percent">--%</div>
+
+      <!-- Batterie droite (niveau) -->
+      <div class="battery-right">
+        <div id="rightFill" class="fill-right"></div>
+        <div id="rightBubbles" class="battery-bubbles" aria-hidden="true"></div>
+      </div>
     </div>
-
-    <!-- Pourcentage -->
-    <div id="percent" class="percent">--%</div>
-
-    <!-- Batterie droite (niveau) -->
-    <div class="battery-right">
-      <div id="rightFill" class="fill-right"></div>
-    </div>
-
   </div>
 
-  <div class="hint">Clique pour plein écran</div>
+  <label class="timezone-picker">
+    <select id="timezoneSelect" class="timezone-select"></select>
+  </label>
+
+  <div class="hint-group">
+    <div class="hint">Cliquer pour plein écran</div>
+  </div>
 
   <script src="script.js"></script>
 </body>
