@@ -22,6 +22,7 @@ const timezoneSelect = document.getElementById("timezoneSelect");
 const timezonePicker = document.querySelector(".timezone-picker");
 const rightBubbles = document.getElementById("rightBubbles");
 const WORLD_TIME_ZONE = "UTC";
+const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
 
 const countries = [
   { name: "Heure mondiale (UTC)", zone: WORLD_TIME_ZONE },
@@ -162,6 +163,9 @@ let activeCountry = countries.find(country => country.zone === WORLD_TIME_ZONE) 
 
 let activeZone = activeCountry.zone;
 let clockTimerId;
+let syncedUtcMs = null;
+let syncedAtPerfMs = 0;
+let syncRequest = null;
 
 function getClockLabel(countryName) {
   if (activeZone === WORLD_TIME_ZONE) {
@@ -169,6 +173,15 @@ function getClockLabel(countryName) {
   }
 
   return `HEURE ACTUELLE - ${countryName.toUpperCase()}`;
+}
+
+function getCurrentReferenceDate() {
+  if (syncedUtcMs !== null) {
+    const elapsedMs = performance.now() - syncedAtPerfMs;
+    return new Date(syncedUtcMs + elapsedMs);
+  }
+
+  return new Date();
 }
 
 function renderTimezoneOptions() {
@@ -194,12 +207,51 @@ function formatTime(zone) {
     minute: "2-digit",
     second: "2-digit",
     hour12: false
-  }).format(new Date(Date.now()));
+  }).format(getCurrentReferenceDate());
 }
 
 function updateClock() {
   clockTime.textContent = formatTime(activeZone);
   clockLabel.textContent = getClockLabel(activeCountry.name);
+}
+
+async function syncTimeFromWorldService() {
+  if (syncRequest) {
+    return syncRequest;
+  }
+
+  syncRequest = fetch(WORLD_TIME_API_URL, {
+    cache: "no-store"
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`World time sync failed: ${response.status}`);
+      }
+
+      return response.json();
+    })
+    .then(data => {
+      const utcDateTime = data.utc_datetime || data.datetime;
+      const parsedUtcMs = Date.parse(utcDateTime);
+
+      if (Number.isNaN(parsedUtcMs)) {
+        throw new Error("World time sync returned an invalid datetime");
+      }
+
+      syncedUtcMs = parsedUtcMs;
+      syncedAtPerfMs = performance.now();
+      updateClock();
+    })
+    .catch(() => {
+      if (syncedUtcMs === null) {
+        updateClock();
+      }
+    })
+    .finally(() => {
+      syncRequest = null;
+    });
+
+  return syncRequest;
 }
 
 function syncClock() {
@@ -251,6 +303,8 @@ window.addEventListener("popstate", removeHashFromUrl);
 
 renderTimezoneOptions();
 removeHashFromUrl();
+syncTimeFromWorldService();
+setInterval(syncTimeFromWorldService, 60000);
 syncClock();
 
 for (let index = 0; index < 6; index += 1) {
