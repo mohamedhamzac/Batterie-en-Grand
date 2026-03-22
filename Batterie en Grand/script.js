@@ -6,13 +6,23 @@ function toggleFullscreen() {
   }
 }
 
+function removeHashFromUrl() {
+  if (!window.location.hash) {
+    return;
+  }
+
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+}
+
 const clockTime = document.getElementById("clockTime");
 const clockLabel = document.getElementById("clockLabel");
 const timezoneSelect = document.getElementById("timezoneSelect");
 const timezonePicker = document.querySelector(".timezone-picker");
 const rightBubbles = document.getElementById("rightBubbles");
+const WORLD_TIME_ZONE = "UTC";
 
 const countries = [
+  { name: "Heure mondiale (UTC)", zone: WORLD_TIME_ZONE },
   { name: "Afghanistan", zone: "Asia/Kabul" },
   { name: "Afrique du Sud", zone: "Africa/Johannesburg" },
   { name: "Albanie", zone: "Europe/Tirane" },
@@ -146,13 +156,16 @@ const countries = [
   { name: "Zimbabwe", zone: "Africa/Harare" }
 ];
 
-let activeCountry = countries.find(country => (
-  country.zone === Intl.DateTimeFormat().resolvedOptions().timeZone
-)) || countries.find(country => country.name === "France") || countries[0];
+let activeCountry = countries.find(country => country.zone === WORLD_TIME_ZONE) || countries[0];
 
 let activeZone = activeCountry.zone;
+let clockTimerId;
 
 function getClockLabel(countryName) {
+  if (activeZone === WORLD_TIME_ZONE) {
+    return "HEURE MONDIALE - UTC";
+  }
+
   return `HEURE ACTUELLE - ${countryName.toUpperCase()}`;
 }
 
@@ -179,12 +192,20 @@ function formatTime(zone) {
     minute: "2-digit",
     second: "2-digit",
     hour12: false
-  }).format(new Date());
+  }).format(new Date(Date.now()));
 }
 
 function updateClock() {
   clockTime.textContent = formatTime(activeZone);
   clockLabel.textContent = getClockLabel(activeCountry.name);
+}
+
+function syncClock() {
+  updateClock();
+  clearTimeout(clockTimerId);
+
+  const delayBeforeNextTick = 1000 - (Date.now() % 1000);
+  clockTimerId = setTimeout(syncClock, delayBeforeNextTick);
 }
 
 function getBatteryColor(level) {
@@ -219,9 +240,12 @@ document.body.addEventListener("click", event => {
   toggleFullscreen();
 });
 
+document.addEventListener("fullscreenchange", removeHashFromUrl);
+window.addEventListener("hashchange", removeHashFromUrl);
+
 renderTimezoneOptions();
-updateClock();
-setInterval(updateClock, 1000);
+removeHashFromUrl();
+syncClock();
 
 for (let index = 0; index < 6; index += 1) {
   const bubble = document.createElement("span");
