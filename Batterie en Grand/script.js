@@ -249,7 +249,7 @@ if ('getBattery' in navigator) {
         percent.style.color = "#22c55e";
         percent.classList.remove("low-battery-alert");
       } else {
-        leftFill.style.background = batteryColor;
+        leftFill.style.background = "#9ca3af";
         bolt.style.display = "none";
         percent.style.color = batteryColor;
         percent.classList.toggle("low-battery-alert", level < 15);
