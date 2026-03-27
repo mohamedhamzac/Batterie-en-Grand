@@ -54,6 +54,26 @@ function getSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+function watchSystemThemeChanges() {
+  const colorSchemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const handleThemeChange = () => {
+    if (getStoredTheme()) {
+      return;
+    }
+
+    applyTheme(getSystemTheme());
+  };
+
+  if (typeof colorSchemeQuery.addEventListener === "function") {
+    colorSchemeQuery.addEventListener("change", handleThemeChange);
+    return;
+  }
+
+  if (typeof colorSchemeQuery.addListener === "function") {
+    colorSchemeQuery.addListener(handleThemeChange);
+  }
+}
+
 function getPreferredTheme() {
   return getStoredTheme() || getSystemTheme();
 }
@@ -475,17 +495,11 @@ window.addEventListener("load", removeHashFromUrl);
 window.addEventListener("pageshow", removeHashFromUrl);
 window.addEventListener("hashchange", removeHashFromUrl);
 window.addEventListener("popstate", removeHashFromUrl);
-window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-  if (getStoredTheme()) {
-    return;
-  }
-
-  applyTheme(getSystemTheme());
-});
 
 renderTimezoneOptions();
 enhanceTimezoneOptionsWhenIdle();
 applyTheme(getPreferredTheme());
+watchSystemThemeChanges();
 removeHashFromUrl();
 updateFullscreenHint();
 syncTimeFromWorldService();
