@@ -33,6 +33,23 @@ function saveTheme(theme) {
   }
 }
 
+function getStoredTimezone() {
+  try {
+    const storedTimezone = localStorage.getItem(TIMEZONE_STORAGE_KEY);
+    return countries.some(country => country.zone === storedTimezone) ? storedTimezone : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveTimezone(zone) {
+  try {
+    localStorage.setItem(TIMEZONE_STORAGE_KEY, zone);
+  } catch {
+    // Ignore localStorage failures and keep the current timezone for the session.
+  }
+}
+
 function getSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
@@ -81,6 +98,7 @@ const controlsPanel = document.querySelector(".controls-panel");
 const timezonePicker = document.querySelector(".timezone-picker");
 const rightBubbles = document.getElementById("rightBubbles");
 const THEME_STORAGE_KEY = "batterie-en-grand-theme";
+const TIMEZONE_STORAGE_KEY = "batterie-en-grand-timezone";
 const WORLD_TIME_ZONE = "UTC";
 const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
 
@@ -219,7 +237,10 @@ const countries = [
   { name: "Zimbabwe", zone: "Africa/Harare" }
 ];
 
-let activeCountry = countries.find(country => country.zone === WORLD_TIME_ZONE) || countries[0];
+const storedTimezone = getStoredTimezone();
+let activeCountry = countries.find(country => country.zone === storedTimezone) ||
+  countries.find(country => country.zone === WORLD_TIME_ZONE) ||
+  countries[0];
 
 let activeZone = activeCountry.zone;
 let clockTimerId;
@@ -348,6 +369,7 @@ function getBatteryColor(level) {
 timezoneSelect.addEventListener("change", event => {
   activeCountry = countries.find(country => country.zone === event.target.value) || countries[0];
   activeZone = activeCountry.zone;
+  saveTimezone(activeZone);
   updateClock();
   setTimeout(() => {
     timezoneSelect.blur();
