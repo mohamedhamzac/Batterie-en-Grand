@@ -14,41 +14,7 @@
   --clock-glow: 0 0 16px rgba(37, 99, 235, 0.22);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --bg-main: radial-gradient(circle at top, #020617, #000000);
-    --text-main: #ffffff;
-    --text-muted: rgba(255, 255, 255, 0.6);
-    --panel-bg: rgba(2, 6, 23, 0.28);
-    --panel-border: rgba(255, 255, 255, 0.08);
-    --panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-    --control-bg: rgba(15, 23, 42, 0.88);
-    --control-border: rgba(255, 255, 255, 0.2);
-    --control-text: #ffffff;
-    --battery-shell: #ffffff;
-    --battery-inner: #020617;
-    --clock-glow: 0 0 16px rgba(96, 165, 250, 0.35);
-  }
-}
-
-:root.theme-light {
-  color-scheme: light;
-  --bg-main: radial-gradient(circle at top, #eff6ff, #dbeafe 52%, #bfdbfe 100%);
-  --text-main: #0f172a;
-  --text-muted: rgba(15, 23, 42, 0.68);
-  --panel-bg: rgba(255, 255, 255, 0.82);
-  --panel-border: rgba(15, 23, 42, 0.14);
-  --panel-shadow: 0 12px 30px rgba(59, 130, 246, 0.16);
-  --control-bg: rgba(255, 255, 255, 0.92);
-  --control-border: rgba(15, 23, 42, 0.16);
-  --control-text: #0f172a;
-  --battery-shell: #0f172a;
-  --battery-inner: #f8fafc;
-  --clock-glow: 0 0 16px rgba(37, 99, 235, 0.22);
-}
-
-:root.theme-dark {
+body.theme-dark {
   color-scheme: dark;
   --bg-main: radial-gradient(circle at top, #020617, #000000);
   --text-main: #ffffff;
