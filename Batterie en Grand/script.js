@@ -123,15 +123,6 @@ const TIMEZONE_STORAGE_KEY = "batterie-en-grand-timezone";
 const WORLD_TIME_ZONE = "UTC";
 const WORLD_TIME_API_ORIGIN = "https://worldtimeapi.org";
 const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
-const timeFormatter = new Intl.DateTimeFormat("fr-FR", {
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false
-});
-const timezoneOffsetFormatter = new Intl.DateTimeFormat("en-US", {
-  timeZoneName: "shortOffset"
-});
 const timezoneLabelCache = new Map();
 
 const countries = [
@@ -308,14 +299,20 @@ function getUtcOffsetLabel(zone) {
     return "UTC+0";
   }
 
-  timezoneOffsetFormatter.resolvedOptions();
-  const parts = new Intl.DateTimeFormat("en-US", {
-    ...timezoneOffsetFormatter.resolvedOptions(),
-    timeZone: zone
-  }).formatToParts(getCurrentReferenceDate());
+  let offsetLabel = "UTC";
 
-  const zoneNamePart = parts.find(part => part.type === "timeZoneName")?.value || "GMT+0";
-  const offsetLabel = zoneNamePart.replace("GMT", "UTC");
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: zone,
+      timeZoneName: "shortOffset"
+    }).formatToParts(getCurrentReferenceDate());
+
+    const zoneNamePart = parts.find(part => part.type === "timeZoneName")?.value || "GMT+0";
+    offsetLabel = zoneNamePart.replace("GMT", "UTC");
+  } catch {
+    offsetLabel = "UTC";
+  }
+
   timezoneLabelCache.set(zone, offsetLabel);
   return offsetLabel;
 }
@@ -370,10 +367,22 @@ function enhanceTimezoneOptionsWhenIdle() {
 }
 
 function formatTime(zone) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    ...timeFormatter.resolvedOptions(),
-    timeZone: zone
-  }).format(getCurrentReferenceDate());
+  try {
+    return new Intl.DateTimeFormat("fr-FR", {
+      timeZone: zone,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    }).format(getCurrentReferenceDate());
+  } catch {
+    return getCurrentReferenceDate().toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    });
+  }
 }
 
 function updateClock() {
