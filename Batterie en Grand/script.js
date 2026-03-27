@@ -22,8 +22,8 @@ function updateFullscreenHint() {
   }
 
   fullscreenHint.textContent = document.fullscreenElement
-    ? "Cliquer quitter plein écran"
-    : "Cliquer pour plein écran";
+    ? "Cliquer pour quitter plein écran"
+    : "Cliquer pour quitter plein écran";
 }
 
 const clockTime = document.getElementById("clockTime");
