@@ -23,7 +23,7 @@ function updateFullscreenHint() {
 
   fullscreenHint.textContent = document.fullscreenElement
     ? "Cliquer pour quitter plein écran"
-    : "Cliquer pour quitter plein écran";
+    : "Cliquer pour plein écran";
 }
 
 const clockTime = document.getElementById("clockTime");
