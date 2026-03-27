@@ -16,8 +16,19 @@ function removeHashFromUrl() {
   history.replaceState(null, "", window.location.pathname + window.location.search);
 }
 
+function updateFullscreenHint() {
+  if (!fullscreenHint) {
+    return;
+  }
+
+  fullscreenHint.textContent = document.fullscreenElement
+    ? "Cliquer quitter plein écran"
+    : "Cliquer pour plein écran";
+}
+
 const clockTime = document.getElementById("clockTime");
 const clockLabel = document.getElementById("clockLabel");
+const fullscreenHint = document.getElementById("fullscreenHint");
 const timezoneSelect = document.getElementById("timezoneSelect");
 const timezonePicker = document.querySelector(".timezone-picker");
 const rightBubbles = document.getElementById("rightBubbles");
@@ -309,7 +320,10 @@ document.body.addEventListener("click", event => {
   toggleFullscreen();
 });
 
-document.addEventListener("fullscreenchange", removeHashFromUrl);
+document.addEventListener("fullscreenchange", () => {
+  removeHashFromUrl();
+  updateFullscreenHint();
+});
 document.addEventListener("DOMContentLoaded", removeHashFromUrl);
 window.addEventListener("load", removeHashFromUrl);
 window.addEventListener("pageshow", removeHashFromUrl);
@@ -318,6 +332,7 @@ window.addEventListener("popstate", removeHashFromUrl);
 
 renderTimezoneOptions();
 removeHashFromUrl();
+updateFullscreenHint();
 syncTimeFromWorldService();
 setInterval(syncTimeFromWorldService, 60000);
 syncClock();
