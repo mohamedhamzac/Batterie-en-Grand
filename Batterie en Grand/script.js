@@ -61,7 +61,8 @@ function getPreferredTheme() {
 function applyTheme(theme) {
   const isDarkTheme = theme === "dark";
 
-  document.body.classList.toggle("theme-dark", isDarkTheme);
+  document.documentElement.classList.toggle("theme-dark", isDarkTheme);
+  document.documentElement.classList.toggle("theme-light", !isDarkTheme);
 
   if (themeToggle) {
     themeToggle.textContent = isDarkTheme ? "Mode clair" : "Mode sombre";
@@ -74,7 +75,7 @@ function applyTheme(theme) {
 }
 
 function toggleTheme() {
-  const nextTheme = document.body.classList.contains("theme-dark") ? "light" : "dark";
+  const nextTheme = document.documentElement.classList.contains("theme-dark") ? "light" : "dark";
   applyTheme(nextTheme);
   saveTheme(nextTheme);
 }
@@ -102,6 +103,16 @@ const TIMEZONE_STORAGE_KEY = "batterie-en-grand-timezone";
 const WORLD_TIME_ZONE = "UTC";
 const WORLD_TIME_API_ORIGIN = "https://worldtimeapi.org";
 const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
+const timeFormatter = new Intl.DateTimeFormat("fr-FR", {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false
+});
+const timezoneOffsetFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZoneName: "shortOffset"
+});
+const timezoneLabelCache = new Map();
 
 const countries = [
   { name: "Heure mondiale (UTC)", zone: WORLD_TIME_ZONE },
@@ -248,6 +259,7 @@ let clockTimerId;
 let syncedUtcMs = null;
 let syncedAtPerfMs = 0;
 let syncRequest = null;
+let timezoneOptionsInitialized = false;
 
 function getClockLabel(countryName) {
   if (activeZone === WORLD_TIME_ZONE) {
@@ -267,42 +279,80 @@ function getCurrentReferenceDate() {
 }
 
 function getUtcOffsetLabel(zone) {
+  if (timezoneLabelCache.has(zone)) {
+    return timezoneLabelCache.get(zone);
+  }
+
   if (zone === WORLD_TIME_ZONE) {
+    timezoneLabelCache.set(zone, "UTC+0");
     return "UTC+0";
   }
 
+  timezoneOffsetFormatter.resolvedOptions();
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: zone,
-    timeZoneName: "shortOffset"
+    ...timezoneOffsetFormatter.resolvedOptions(),
+    timeZone: zone
   }).formatToParts(getCurrentReferenceDate());
 
   const zoneNamePart = parts.find(part => part.type === "timeZoneName")?.value || "GMT+0";
-  return zoneNamePart.replace("GMT", "UTC");
+  const offsetLabel = zoneNamePart.replace("GMT", "UTC");
+  timezoneLabelCache.set(zone, offsetLabel);
+  return offsetLabel;
 }
 
-function renderTimezoneOptions() {
+function buildTimezoneOptionLabel(country, includeOffset) {
+  return includeOffset ? `${country.name} - ${getUtcOffsetLabel(country.zone)}` : country.name;
+}
+
+function renderTimezoneOptions(includeOffset = false) {
+  const fragment = document.createDocumentFragment();
   timezoneSelect.innerHTML = "";
 
   countries.forEach(country => {
     const option = document.createElement("option");
     option.value = country.zone;
-    option.textContent = `${country.name} - ${getUtcOffsetLabel(country.zone)}`;
+    option.textContent = buildTimezoneOptionLabel(country, includeOffset);
 
     if (country.zone === activeZone) {
       option.selected = true;
     }
 
-    timezoneSelect.appendChild(option);
+    fragment.appendChild(option);
   });
+
+  timezoneSelect.appendChild(fragment);
+  timezoneOptionsInitialized = true;
+}
+
+function enhanceTimezoneOptionsWhenIdle() {
+  const updateOptions = () => {
+    if (!timezoneOptionsInitialized) {
+      return;
+    }
+
+    Array.from(timezoneSelect.options).forEach(option => {
+      const country = countries.find(entry => entry.zone === option.value);
+
+      if (!country) {
+        return;
+      }
+
+      option.textContent = buildTimezoneOptionLabel(country, true);
+    });
+  };
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(updateOptions, { timeout: 1200 });
+    return;
+  }
+
+  window.setTimeout(updateOptions, 0);
 }
 
 function formatTime(zone) {
   return new Intl.DateTimeFormat("fr-FR", {
-    timeZone: zone,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false
+    ...timeFormatter.resolvedOptions(),
+    timeZone: zone
   }).format(getCurrentReferenceDate());
 }
 
@@ -357,7 +407,6 @@ async function syncTimeFromWorldService() {
 
       syncedUtcMs = parsedUtcMs;
       syncedAtPerfMs = performance.now();
-      renderTimezoneOptions();
       updateClock();
     })
     .catch(() => {
@@ -435,6 +484,7 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () 
 });
 
 renderTimezoneOptions();
+enhanceTimezoneOptionsWhenIdle();
 applyTheme(getPreferredTheme());
 removeHashFromUrl();
 updateFullscreenHint();
