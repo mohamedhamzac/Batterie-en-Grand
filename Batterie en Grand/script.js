@@ -16,6 +16,52 @@ function removeHashFromUrl() {
   history.replaceState(null, "", window.location.pathname + window.location.search);
 }
 
+function getStoredTheme() {
+  try {
+    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    return storedTheme === "dark" || storedTheme === "light" ? storedTheme : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveTheme(theme) {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Ignore localStorage failures and keep the current theme for the session.
+  }
+}
+
+function getSystemTheme() {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function getPreferredTheme() {
+  return getStoredTheme() || getSystemTheme();
+}
+
+function applyTheme(theme) {
+  const isDarkTheme = theme === "dark";
+
+  document.body.classList.toggle("theme-dark", isDarkTheme);
+
+  if (themeToggle) {
+    themeToggle.textContent = isDarkTheme ? "Mode clair" : "Mode sombre";
+    themeToggle.setAttribute("aria-pressed", String(isDarkTheme));
+    themeToggle.setAttribute(
+      "aria-label",
+      isDarkTheme ? "Activer le mode clair" : "Activer le mode sombre"
+    );
+  }
+}
+
+function toggleTheme() {
+  const nextTheme = document.body.classList.contains("theme-dark") ? "light" : "dark";
+  applyTheme(nextTheme);
+  saveTheme(nextTheme);
+}
+
 function updateFullscreenHint() {
   if (!fullscreenHint) {
     return;
@@ -29,9 +75,12 @@ function updateFullscreenHint() {
 const clockTime = document.getElementById("clockTime");
 const clockLabel = document.getElementById("clockLabel");
 const fullscreenHint = document.getElementById("fullscreenHint");
+const themeToggle = document.getElementById("themeToggle");
 const timezoneSelect = document.getElementById("timezoneSelect");
+const controlsPanel = document.querySelector(".controls-panel");
 const timezonePicker = document.querySelector(".timezone-picker");
 const rightBubbles = document.getElementById("rightBubbles");
+const THEME_STORAGE_KEY = "batterie-en-grand-theme";
 const WORLD_TIME_ZONE = "UTC";
 const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
 
@@ -307,9 +356,13 @@ timezoneSelect.addEventListener("change", event => {
 });
 
 ["pointerdown", "mousedown", "click", "touchstart"].forEach(eventName => {
-  timezonePicker.addEventListener(eventName, event => {
+  controlsPanel.addEventListener(eventName, event => {
     event.stopPropagation();
   });
+});
+
+themeToggle.addEventListener("click", () => {
+  toggleTheme();
 });
 
 document.body.addEventListener("click", event => {
@@ -329,8 +382,16 @@ window.addEventListener("load", removeHashFromUrl);
 window.addEventListener("pageshow", removeHashFromUrl);
 window.addEventListener("hashchange", removeHashFromUrl);
 window.addEventListener("popstate", removeHashFromUrl);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  if (getStoredTheme()) {
+    return;
+  }
+
+  applyTheme(getSystemTheme());
+});
 
 renderTimezoneOptions();
+applyTheme(getPreferredTheme());
 removeHashFromUrl();
 updateFullscreenHint();
 syncTimeFromWorldService();
