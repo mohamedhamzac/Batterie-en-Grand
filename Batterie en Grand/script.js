@@ -100,6 +100,7 @@ const rightBubbles = document.getElementById("rightBubbles");
 const THEME_STORAGE_KEY = "batterie-en-grand-theme";
 const TIMEZONE_STORAGE_KEY = "batterie-en-grand-timezone";
 const WORLD_TIME_ZONE = "UTC";
+const WORLD_TIME_API_ORIGIN = "https://worldtimeapi.org";
 const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
 
 const countries = [
@@ -310,21 +311,42 @@ function updateClock() {
   clockLabel.textContent = getClockLabel(activeCountry.name);
 }
 
+async function fetchWorldTime() {
+  const requestUrl = new URL(WORLD_TIME_API_URL);
+
+  if (requestUrl.origin !== WORLD_TIME_API_ORIGIN || requestUrl.protocol !== "https:") {
+    throw new Error("Blocked unexpected world time API origin");
+  }
+
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => abortController.abort(), 5000);
+
+  try {
+    const response = await fetch(requestUrl.toString(), {
+      cache: "no-store",
+      credentials: "omit",
+      mode: "cors",
+      redirect: "error",
+      referrerPolicy: "no-referrer",
+      signal: abortController.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`World time sync failed: ${response.status}`);
+    }
+
+    return response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function syncTimeFromWorldService() {
   if (syncRequest) {
     return syncRequest;
   }
 
-  syncRequest = fetch(WORLD_TIME_API_URL, {
-    cache: "no-store"
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`World time sync failed: ${response.status}`);
-      }
-
-      return response.json();
-    })
+  syncRequest = fetchWorldTime()
     .then(data => {
       const utcDateTime = data.utc_datetime || data.datetime;
       const parsedUtcMs = Date.parse(utcDateTime);
