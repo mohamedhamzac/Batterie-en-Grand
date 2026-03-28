@@ -435,21 +435,23 @@ timezoneSelect.addEventListener("change", event => {
   });
 });
 
-["pointerdown", "mousedown", "click", "touchstart"].forEach(eventName => {
-  themeSwitch.addEventListener(eventName, event => {
-    event.stopPropagation();
+if (themeSwitch && themeLightButton && themeDarkButton) {
+  ["pointerdown", "mousedown", "click", "touchstart"].forEach(eventName => {
+    themeSwitch.addEventListener(eventName, event => {
+      event.stopPropagation();
+    });
   });
-});
 
-themeLightButton.addEventListener("click", () => {
-  applyTheme("light");
-  saveTheme("light");
-});
+  themeLightButton.addEventListener("click", () => {
+    applyTheme("light");
+    saveTheme("light");
+  });
 
-themeDarkButton.addEventListener("click", () => {
-  applyTheme("dark");
-  saveTheme("dark");
-});
+  themeDarkButton.addEventListener("click", () => {
+    applyTheme("dark");
+    saveTheme("dark");
+  });
+}
 
 document.body.addEventListener("click", event => {
   if (event.target.closest(".timezone-picker")) {
