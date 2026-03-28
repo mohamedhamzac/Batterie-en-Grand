@@ -69,12 +69,6 @@ function applyTheme(theme) {
   }
 }
 
-function revealPage() {
-  window.requestAnimationFrame(() => {
-    document.body.classList.add("page-ready");
-  });
-}
-
 function toggleTheme() {
   const nextTheme = document.documentElement.classList.contains("theme-dark") ? "light" : "dark";
   applyTheme(nextTheme);
@@ -460,25 +454,6 @@ function getBatteryColor(level) {
   return "#7f1d1d";
 }
 
-function updateBatteryVisuals(level, batteryColor, isCharging) {
-  const safeLevel = Math.max(0, Math.min(level, 100));
-  const leftFillScale = Math.max(0.08, safeLevel / 100);
-
-  percent.textContent = `${safeLevel}%`;
-  percent.style.color = isCharging ? "#22c55e" : batteryColor;
-  percent.classList.toggle("low-battery-alert", !isCharging && safeLevel < 15);
-  percent.style.transform = isCharging ? "scale(1.03)" : "scale(1)";
-
-  leftFill.style.background = isCharging ? "#22c55e" : "#9ca3af";
-  leftFill.style.transform = `scaleX(${leftFillScale})`;
-
-  bolt.style.display = isCharging ? "flex" : "none";
-  rightFill.style.height = `${safeLevel}%`;
-  rightFill.style.background = batteryColor;
-  rightFill.style.boxShadow = `inset 0 12px 18px rgba(255, 255, 255, 0.18), 0 0 24px ${batteryColor}33`;
-  rightBubbles.style.setProperty("--bubble-color", batteryColor);
-}
-
 timezoneSelect.addEventListener("change", event => {
   activeCountry = countries.find(country => country.zone === event.target.value) || countries[0];
   activeZone = activeCountry.zone;
@@ -554,7 +529,6 @@ syncTimeFromWorldService();
 setInterval(syncTimeFromWorldService, 60000);
 syncClock();
 scheduleCursorHide();
-revealPage();
 
 for (let index = 0; index < 6; index += 1) {
   const bubble = document.createElement("span");
@@ -568,8 +542,26 @@ if ('getBattery' in navigator) {
 
     function updateBattery() {
       const level = Math.round(battery.level * 100);
+      percent.textContent = level + "%";
       const batteryColor = getBatteryColor(level);
-      updateBatteryVisuals(level, batteryColor, battery.charging);
+
+      // ===== Si ça charge =====
+      if (battery.charging) {
+        leftFill.style.background = "#22c55e";
+        bolt.style.display = "flex";
+        percent.style.color = "#22c55e";
+        percent.classList.remove("low-battery-alert");
+      } else {
+        leftFill.style.background = "#9ca3af";
+        bolt.style.display = "none";
+        percent.style.color = batteryColor;
+        percent.classList.toggle("low-battery-alert", level < 15);
+      }
+
+      // ===== Batterie droite =====
+      rightFill.style.height = level + "%";
+      rightFill.style.background = batteryColor;
+      rightBubbles.style.setProperty("--bubble-color", batteryColor);
     }
 
     updateBattery();

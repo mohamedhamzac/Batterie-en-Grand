@@ -9,9 +9,6 @@ html.theme-dark {
 :root {
   color-scheme: light;
   --bg-main: radial-gradient(circle at top, #eff6ff, #dbeafe 52%, #bfdbfe 100%);
-  --bg-accent: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.78), transparent 42%),
-    radial-gradient(circle at 80% 15%, rgba(96, 165, 250, 0.24), transparent 32%),
-    radial-gradient(circle at 50% 100%, rgba(59, 130, 246, 0.18), transparent 44%);
   --text-main: #0f172a;
   --text-muted: rgba(30, 64, 175, 0.95);
   --panel-bg: rgba(255, 255, 255, 0.82);
@@ -32,9 +29,6 @@ html.theme-dark {
 html.theme-dark {
   color-scheme: dark;
   --bg-main: radial-gradient(circle at top, #020617, #000000);
-  --bg-accent: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 38%),
-    radial-gradient(circle at 78% 18%, rgba(59, 130, 246, 0.16), transparent 30%),
-    radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.64), transparent 46%);
   --text-main: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.6);
   --panel-bg: rgba(2, 6, 23, 0.28);
@@ -63,38 +57,7 @@ body {
   color: var(--text-main);
   cursor: pointer;
   overflow: hidden;
-  opacity: 0;
-  transition: background 0.45s ease, color 0.35s ease, opacity 0.5s ease;
-}
-
-body::before,
-body::after {
-  content: "";
-  position: fixed;
-  inset: -12%;
-  pointer-events: none;
-}
-
-body::before {
-  background: var(--bg-accent);
-  opacity: 0.9;
-  transform: scale(1.02);
-  animation: ambientDrift 18s ease-in-out infinite alternate;
-}
-
-body::after {
-  inset: auto 8% 8% auto;
-  width: 280px;
-  height: 280px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 68%);
-  filter: blur(12px);
-  opacity: 0.7;
-  animation: ambientPulse 9s ease-in-out infinite;
-}
-
-body.page-ready {
-  opacity: 1;
+  transition: background 0.35s ease, color 0.35s ease;
 }
 
 body.fullscreen-idle {
@@ -111,14 +74,6 @@ body.fullscreen-idle {
   color: var(--text-main);
   text-decoration: none;
   z-index: 20;
-  opacity: 0;
-  transform: translateY(-12px);
-  transition: opacity 0.45s ease, transform 0.45s ease, color 0.35s ease;
-}
-
-body.page-ready .brand-mark {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .brand-mark img {
@@ -158,15 +113,6 @@ body.page-ready .brand-mark {
   background: var(--panel-bg);
   box-shadow: var(--panel-shadow);
   backdrop-filter: blur(14px);
-  transform: translateY(18px) scale(0.985);
-  opacity: 0;
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s ease,
-    background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
-}
-
-body.page-ready .battery-panel {
-  transform: translateY(0) scale(1);
-  opacity: 1;
 }
 
 body.no-battery .battery-panel {
@@ -195,8 +141,7 @@ body.no-battery .percent {
   font-size: clamp(80px, 20vw, 160px);
   font-weight: bold;
   text-shadow: var(--percent-shadow);
-  transition: color 0.4s ease, transform 0.35s ease, text-shadow 0.35s ease;
-  will-change: transform;
+  transition: color 0.4s ease;
 }
 
 .percent.low-battery-alert {
@@ -226,8 +171,6 @@ body.no-battery .percent {
   border-radius: 10px;
   position: relative;
   overflow: hidden;
-  background: color-mix(in srgb, var(--battery-inner) 88%, transparent);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 .battery-left::after {
@@ -244,8 +187,7 @@ body.no-battery .percent {
 .fill-left {
   height: 100%;
   width: 100%;
-  transform-origin: left center;
-  transition: background 0.45s ease, transform 0.45s ease;
+  transition: background 0.4s ease;
 }
 
 .bolt {
@@ -256,7 +198,6 @@ body.no-battery .percent {
   justify-content: center;
   font-size: 36px;
   animation: pulse 1s infinite;
-  text-shadow: 0 0 22px rgba(255, 255, 255, 0.55);
 }
 
 @keyframes pulse {
@@ -293,10 +234,8 @@ body.no-battery .percent {
   bottom: 0;
   left: 0;
   width: 100%;
-  transition: height 0.75s cubic-bezier(0.22, 1, 0.36, 1), background 0.45s ease,
-    box-shadow 0.45s ease;
+  transition: height 0.6s ease, background 0.4s ease;
   z-index: 1;
-  box-shadow: inset 0 12px 18px rgba(255, 255, 255, 0.18);
 }
 
 .battery-bubbles {
@@ -413,7 +352,6 @@ body.no-battery .percent {
   letter-spacing: 0.14em;
   line-height: 1;
   text-shadow: var(--clock-glow);
-  transition: text-shadow 0.35s ease, color 0.35s ease;
 }
 
 .controls-panel {
@@ -426,15 +364,9 @@ body.no-battery .percent {
   gap: 10px;
   width: min(320px, calc(100vw - 32px));
   z-index: 20;
-  opacity: 0;
-  pointer-events: auto;
-  transform: translateY(-10px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
-}
-
-body.page-ready .controls-panel {
   opacity: 1;
-  transform: translateY(0);
+  pointer-events: auto;
+  transition: opacity 0.2s ease;
 }
 
 :fullscreen .controls-panel {
@@ -473,13 +405,6 @@ body.page-ready .controls-panel {
   outline: none;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
   box-sizing: border-box;
-  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease,
-    background 0.35s ease, color 0.35s ease;
-}
-
-.timezone-select:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.16);
 }
 
 .timezone-select:focus {
@@ -502,15 +427,7 @@ body.page-ready .controls-panel {
   box-sizing: border-box;
   isolation: isolate;
   z-index: 20;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.35s ease, transform 0.35s ease, background 0.35s ease,
-    border-color 0.35s ease;
-}
-
-body.page-ready .theme-switch {
-  opacity: 1;
-  transform: translateY(0);
+  transition: opacity 0.2s ease;
 }
 
 .theme-switch-thumb {
@@ -579,34 +496,6 @@ html.theme-dark .theme-switch-thumb {
 .hint {
   color: var(--hint-color);
   font-size: 14px;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.45s ease 0.08s, transform 0.45s ease 0.08s, color 0.35s ease;
-}
-
-body.page-ready .hint {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-@keyframes ambientDrift {
-  0% {
-    transform: translate3d(-1%, -1%, 0) scale(1.02);
-  }
-  100% {
-    transform: translate3d(1.5%, 1%, 0) scale(1.06);
-  }
-}
-
-@keyframes ambientPulse {
-  0%, 100% {
-    transform: scale(0.95);
-    opacity: 0.45;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 0.78;
-  }
 }
 
 body.device-tablet {
@@ -810,29 +699,5 @@ body.no-battery.device-mobile .clock-time {
     right: 12px;
     bottom: 12px;
     width: 136px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  body {
-    opacity: 1;
-  }
-
-  .brand-mark,
-  .battery-panel,
-  .controls-panel,
-  .theme-switch,
-  .hint {
-    opacity: 1;
-    transform: none;
   }
 }
