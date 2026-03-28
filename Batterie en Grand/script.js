@@ -85,6 +85,38 @@ function updateFullscreenHint() {
     : "Cliquer pour plein écran";
 }
 
+function detectDeviceType() {
+  const userAgent = navigator.userAgent || "";
+  const hasCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+  const shortestSide = Math.min(window.innerWidth, window.innerHeight);
+  const longestSide = Math.max(window.innerWidth, window.innerHeight);
+  const isTabletUserAgent = /iPad|Tablet|PlayBook|Silk/i.test(userAgent);
+  const isMobileUserAgent = /Android|iPhone|iPod|IEMobile|Opera Mini|Windows Phone/i.test(userAgent);
+
+  if (isTabletUserAgent || (hasCoarsePointer && shortestSide >= 700 && longestSide >= 900)) {
+    return "tablet";
+  }
+
+  if (isMobileUserAgent || (hasCoarsePointer && shortestSide < 700)) {
+    return "mobile";
+  }
+
+  return "desktop";
+}
+
+function applyDeviceLayout() {
+  const deviceType = detectDeviceType();
+
+  document.body.dataset.device = deviceType;
+  document.body.classList.toggle("device-mobile", deviceType === "mobile");
+  document.body.classList.toggle("device-tablet", deviceType === "tablet");
+  document.body.classList.toggle("device-desktop", deviceType === "desktop");
+}
+
+function setBatteryAvailability(hasBattery) {
+  document.body.classList.toggle("no-battery", !hasBattery);
+}
+
 function clearCursorHideTimer() {
   if (cursorHideTimerId) {
     clearTimeout(cursorHideTimerId);
@@ -125,6 +157,10 @@ const themeDarkButton = document.getElementById("themeDarkButton");
 const timezoneSelect = document.getElementById("timezoneSelect");
 const controlsPanel = document.querySelector(".controls-panel");
 const rightBubbles = document.getElementById("rightBubbles");
+const percent = document.getElementById("percent");
+const leftFill = document.getElementById("leftFill");
+const rightFill = document.getElementById("rightFill");
+const bolt = document.getElementById("bolt");
 const THEME_STORAGE_KEY = "batterie-en-grand-theme";
 const TIMEZONE_STORAGE_KEY = "batterie-en-grand-timezone";
 const WORLD_TIME_ZONE = "UTC";
@@ -471,6 +507,8 @@ window.addEventListener("load", removeHashFromUrl);
 window.addEventListener("pageshow", removeHashFromUrl);
 window.addEventListener("hashchange", removeHashFromUrl);
 window.addEventListener("popstate", removeHashFromUrl);
+window.addEventListener("resize", applyDeviceLayout);
+window.addEventListener("orientationchange", applyDeviceLayout);
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
   if (getStoredTheme()) {
     return;
@@ -482,6 +520,7 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () 
   document.addEventListener(eventName, refreshCursorVisibility, { passive: true });
 });
 
+applyDeviceLayout();
 renderTimezoneOptions();
 applyTheme(getPreferredTheme());
 removeHashFromUrl();
@@ -499,15 +538,11 @@ for (let index = 0; index < 6; index += 1) {
 
 if ('getBattery' in navigator) {
   navigator.getBattery().then(battery => {
+    setBatteryAvailability(true);
 
     function updateBattery() {
       const level = Math.round(battery.level * 100);
-      const percent = document.getElementById("percent");
       percent.textContent = level + "%";
-
-      const leftFill = document.getElementById("leftFill");
-      const rightFill = document.getElementById("rightFill");
-      const bolt = document.getElementById("bolt");
       const batteryColor = getBatteryColor(level);
 
       // ===== Si ça charge =====
@@ -532,7 +567,9 @@ if ('getBattery' in navigator) {
     updateBattery();
     battery.addEventListener("levelchange", updateBattery);
     battery.addEventListener("chargingchange", updateBattery);
+  }).catch(() => {
+    setBatteryAvailability(false);
   });
 } else {
-  document.getElementById("percent").textContent = "Non supporté";
+  setBatteryAvailability(false);
 }

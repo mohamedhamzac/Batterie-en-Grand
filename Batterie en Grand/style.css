@@ -10,7 +10,7 @@ html.theme-dark {
   color-scheme: light;
   --bg-main: radial-gradient(circle at top, #eff6ff, #dbeafe 52%, #bfdbfe 100%);
   --text-main: #0f172a;
-  --text-muted: rgba(15, 23, 42, 0.68);
+  --text-muted: rgba(15, 23, 42, 0.82);
   --panel-bg: rgba(255, 255, 255, 0.82);
   --panel-border: rgba(15, 23, 42, 0.14);
   --panel-shadow: 0 12px 30px rgba(59, 130, 246, 0.16);
@@ -19,8 +19,11 @@ html.theme-dark {
   --control-text: #0f172a;
   --battery-shell: #0f172a;
   --battery-inner: #f8fafc;
-  --bubble-tint: rgba(15, 23, 42, 0.3);
-  --clock-glow: 0 0 16px rgba(37, 99, 235, 0.22);
+  --bubble-tint: rgba(15, 23, 42, 0.48);
+  --clock-glow: 0 0 12px rgba(15, 23, 42, 0.14);
+  --brand-shadow: drop-shadow(0 0 14px rgba(15, 23, 42, 0.18));
+  --percent-shadow: 0 0 14px rgba(15, 23, 42, 0.16);
+  --hint-color: rgba(15, 23, 42, 0.78);
 }
 
 html.theme-dark {
@@ -38,6 +41,9 @@ html.theme-dark {
   --battery-inner: #020617;
   --bubble-tint: rgba(255, 255, 255, 0.5);
   --clock-glow: 0 0 16px rgba(96, 165, 250, 0.35);
+  --brand-shadow: drop-shadow(0 0 18px rgba(34, 197, 94, 0.2));
+  --percent-shadow: 0 0 20px currentColor;
+  --hint-color: rgba(255, 255, 255, 0.5);
 }
 
 body {
@@ -74,7 +80,7 @@ body.fullscreen-idle {
   width: 54px;
   height: 54px;
   display: block;
-  filter: drop-shadow(0 0 18px rgba(34, 197, 94, 0.2));
+  filter: var(--brand-shadow);
 }
 
 .brand-mark span {
@@ -109,10 +115,32 @@ body.fullscreen-idle {
   backdrop-filter: blur(14px);
 }
 
+body.no-battery .battery-panel {
+  min-height: 280px;
+  padding: 34px 54px;
+}
+
+body.no-battery .clock-panel {
+  position: static;
+  transform: none;
+  width: 100%;
+  gap: 12px;
+}
+
+body.no-battery .clock-time {
+  font-size: clamp(54px, 10vw, 110px);
+}
+
+body.no-battery .battery-left,
+body.no-battery .battery-right,
+body.no-battery .percent {
+  display: none;
+}
+
 .percent {
   font-size: clamp(80px, 20vw, 160px);
   font-weight: bold;
-  text-shadow: 0 0 20px currentColor;
+  text-shadow: var(--percent-shadow);
   transition: color 0.4s ease;
 }
 
@@ -466,8 +494,151 @@ html.theme-dark .theme-switch-thumb {
 }
 
 .hint {
-  opacity: 0.5;
+  color: var(--hint-color);
   font-size: 14px;
+}
+
+body.device-tablet {
+  min-height: 100vh;
+  padding: 28px 0 120px;
+  overflow: auto;
+  align-items: flex-start;
+}
+
+body.device-tablet .container {
+  width: min(1000px, calc(100vw - 36px));
+  margin-top: 92px;
+}
+
+body.device-tablet .battery-panel {
+  gap: 34px;
+  padding: 44px 34px 30px;
+}
+
+body.device-tablet .clock-panel {
+  top: -92px;
+  width: min(560px, calc(100vw - 56px));
+}
+
+body.device-tablet .controls-panel {
+  top: 18px;
+  right: 18px;
+  width: min(320px, calc(100vw - 36px));
+}
+
+body.device-tablet .theme-switch {
+  right: 18px;
+  bottom: 18px;
+}
+
+body.no-battery.device-tablet .battery-panel {
+  min-height: 300px;
+}
+
+body.device-mobile {
+  min-height: 100vh;
+  padding: 18px 0 132px;
+  overflow: auto;
+  align-items: flex-start;
+}
+
+body.device-mobile .brand-mark {
+  top: 12px;
+  left: 12px;
+  gap: 10px;
+}
+
+body.device-mobile .brand-mark img {
+  width: 42px;
+  height: 42px;
+}
+
+body.device-mobile .brand-mark span {
+  max-width: 180px;
+  font-size: 11px;
+  letter-spacing: 0.09em;
+}
+
+body.device-mobile .container {
+  width: calc(100vw - 20px);
+  margin-top: 82px;
+}
+
+body.device-mobile .battery-panel {
+  width: 100%;
+  gap: 22px;
+  padding: 34px 18px 22px;
+  border-radius: 26px;
+}
+
+body.device-mobile .clock-panel {
+  position: static;
+  transform: none;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+body.device-mobile .clock-label {
+  font-size: 11px;
+  letter-spacing: 0.13em;
+}
+
+body.device-mobile .clock-time {
+  font-size: clamp(28px, 10vw, 40px);
+}
+
+body.device-mobile .battery-left {
+  width: min(190px, 56vw);
+  height: 66px;
+}
+
+body.device-mobile .battery-right {
+  width: 72px;
+  height: 152px;
+}
+
+body.device-mobile .percent {
+  font-size: clamp(72px, 24vw, 112px);
+}
+
+body.device-mobile .controls-panel {
+  top: 12px;
+  right: 12px;
+  width: min(220px, calc(100vw - 24px));
+}
+
+body.device-mobile .timezone-select {
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+body.device-mobile .theme-switch {
+  right: 12px;
+  bottom: 14px;
+  width: 132px;
+}
+
+body.device-mobile .hint-group {
+  bottom: 86px;
+  width: calc(100vw - 24px);
+}
+
+body.device-mobile .hint {
+  text-align: center;
+  font-size: 13px;
+}
+
+body.no-battery.device-mobile .battery-panel {
+  min-height: 220px;
+  padding: 28px 18px;
+}
+
+body.no-battery.device-mobile .clock-panel {
+  margin-bottom: 0;
+}
+
+body.no-battery.device-mobile .clock-time {
+  font-size: clamp(34px, 12vw, 54px);
 }
 
 @media (max-width: 900px) {
