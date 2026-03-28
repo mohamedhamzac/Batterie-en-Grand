@@ -19,6 +19,7 @@ html.theme-dark {
   --control-text: #0f172a;
   --battery-shell: #0f172a;
   --battery-inner: #f8fafc;
+  --bubble-tint: rgba(15, 23, 42, 0.3);
   --clock-glow: 0 0 16px rgba(37, 99, 235, 0.22);
 }
 
@@ -35,6 +36,7 @@ html.theme-dark {
   --control-text: #ffffff;
   --battery-shell: #ffffff;
   --battery-inner: #020617;
+  --bubble-tint: rgba(255, 255, 255, 0.5);
   --clock-glow: 0 0 16px rgba(96, 165, 250, 0.35);
 }
 
@@ -224,7 +226,7 @@ body.fullscreen-idle {
   position: absolute;
   bottom: -18px;
   border-radius: 999px;
-  background: var(--bubble-color, rgba(255, 255, 255, 0.5));
+  background: var(--bubble-color, var(--bubble-tint));
   opacity: 0.88;
   filter: blur(0.4px);
   animation-name: bubbleRise;
