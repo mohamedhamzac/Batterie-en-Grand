@@ -10,7 +10,7 @@ html.theme-dark {
   color-scheme: light;
   --bg-main: radial-gradient(circle at top, #eff6ff, #dbeafe 52%, #bfdbfe 100%);
   --text-main: #0f172a;
-  --text-muted: rgba(30, 64, 175, 0.82);
+  --text-muted: rgba(30, 64, 175, 0.95);
   --panel-bg: rgba(255, 255, 255, 0.82);
   --panel-border: rgba(15, 23, 42, 0.14);
   --panel-shadow: 0 12px 30px rgba(59, 130, 246, 0.16);
@@ -20,10 +20,10 @@ html.theme-dark {
   --battery-shell: #0f172a;
   --battery-inner: #f8fafc;
   --bubble-tint: rgba(15, 23, 42, 0.48);
-  --clock-glow: 0 0 14px rgba(29, 78, 216, 0.2);
-  --brand-shadow: drop-shadow(0 0 14px rgba(21, 128, 61, 0.24));
-  --percent-shadow: 0 0 16px currentColor;
-  --hint-color: rgba(30, 64, 175, 0.82);
+  --clock-glow: 0 0 16px rgba(29, 78, 216, 0.3);
+  --brand-shadow: drop-shadow(0 0 16px rgba(21, 128, 61, 0.34));
+  --percent-shadow: 0 0 18px currentColor;
+  --hint-color: rgba(30, 64, 175, 0.95);
 }
 
 html.theme-dark {
