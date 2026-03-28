@@ -7,6 +7,7 @@
   <title>Batterie en Grand</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="shortcut icon" href="favicon.svg">
+  <script src="theme-init.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -41,13 +42,31 @@
   </div>
 
   <div class="controls-panel">
-    <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">
-      Mode sombre
-    </button>
-
     <label class="timezone-picker">
       <select id="timezoneSelect" class="timezone-select"></select>
     </label>
+  </div>
+
+  <div id="themeSwitch" class="theme-switch" role="group" aria-label="Choix du theme">
+    <span class="theme-switch-thumb" aria-hidden="true"></span>
+    <button
+      id="themeLightButton"
+      class="theme-option theme-option-light"
+      type="button"
+      aria-pressed="false"
+      aria-label="Activer le mode clair"
+    >
+      <span class="theme-icon" aria-hidden="true">☀</span>
+    </button>
+    <button
+      id="themeDarkButton"
+      class="theme-option theme-option-dark"
+      type="button"
+      aria-pressed="false"
+      aria-label="Activer le mode sombre"
+    >
+      <span class="theme-icon" aria-hidden="true">☾</span>
+    </button>
   </div>
 
   <div class="hint-group">

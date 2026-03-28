@@ -61,20 +61,16 @@ function getPreferredTheme() {
 function applyTheme(theme) {
   const isDarkTheme = theme === "dark";
 
-  document.body.classList.toggle("theme-dark", isDarkTheme);
+  document.documentElement.classList.toggle("theme-dark", isDarkTheme);
 
-  if (themeToggle) {
-    themeToggle.textContent = isDarkTheme ? "Mode clair" : "Mode sombre";
-    themeToggle.setAttribute("aria-pressed", String(isDarkTheme));
-    themeToggle.setAttribute(
-      "aria-label",
-      isDarkTheme ? "Activer le mode clair" : "Activer le mode sombre"
-    );
+  if (themeLightButton && themeDarkButton) {
+    themeLightButton.setAttribute("aria-pressed", String(!isDarkTheme));
+    themeDarkButton.setAttribute("aria-pressed", String(isDarkTheme));
   }
 }
 
 function toggleTheme() {
-  const nextTheme = document.body.classList.contains("theme-dark") ? "light" : "dark";
+  const nextTheme = document.documentElement.classList.contains("theme-dark") ? "light" : "dark";
   applyTheme(nextTheme);
   saveTheme(nextTheme);
 }
@@ -89,13 +85,45 @@ function updateFullscreenHint() {
     : "Cliquer pour plein écran";
 }
 
+function clearCursorHideTimer() {
+  if (cursorHideTimerId) {
+    clearTimeout(cursorHideTimerId);
+    cursorHideTimerId = null;
+  }
+}
+
+function setCursorVisible() {
+  document.body.classList.remove("fullscreen-idle");
+}
+
+function scheduleCursorHide() {
+  clearCursorHideTimer();
+
+  if (!document.fullscreenElement) {
+    setCursorVisible();
+    return;
+  }
+
+  cursorHideTimerId = setTimeout(() => {
+    if (document.fullscreenElement) {
+      document.body.classList.add("fullscreen-idle");
+    }
+  }, CURSOR_HIDE_DELAY_MS);
+}
+
+function refreshCursorVisibility() {
+  setCursorVisible();
+  scheduleCursorHide();
+}
+
 const clockTime = document.getElementById("clockTime");
 const clockLabel = document.getElementById("clockLabel");
 const fullscreenHint = document.getElementById("fullscreenHint");
-const themeToggle = document.getElementById("themeToggle");
+const themeSwitch = document.getElementById("themeSwitch");
+const themeLightButton = document.getElementById("themeLightButton");
+const themeDarkButton = document.getElementById("themeDarkButton");
 const timezoneSelect = document.getElementById("timezoneSelect");
 const controlsPanel = document.querySelector(".controls-panel");
-const timezonePicker = document.querySelector(".timezone-picker");
 const rightBubbles = document.getElementById("rightBubbles");
 const THEME_STORAGE_KEY = "batterie-en-grand-theme";
 const TIMEZONE_STORAGE_KEY = "batterie-en-grand-timezone";
@@ -248,6 +276,8 @@ let clockTimerId;
 let syncedUtcMs = null;
 let syncedAtPerfMs = 0;
 let syncRequest = null;
+let cursorHideTimerId = null;
+const CURSOR_HIDE_DELAY_MS = 2500;
 
 function getClockLabel(countryName) {
   if (activeZone === WORLD_TIME_ZONE) {
@@ -405,8 +435,20 @@ timezoneSelect.addEventListener("change", event => {
   });
 });
 
-themeToggle.addEventListener("click", () => {
-  toggleTheme();
+["pointerdown", "mousedown", "click", "touchstart"].forEach(eventName => {
+  themeSwitch.addEventListener(eventName, event => {
+    event.stopPropagation();
+  });
+});
+
+themeLightButton.addEventListener("click", () => {
+  applyTheme("light");
+  saveTheme("light");
+});
+
+themeDarkButton.addEventListener("click", () => {
+  applyTheme("dark");
+  saveTheme("dark");
 });
 
 document.body.addEventListener("click", event => {
@@ -420,6 +462,7 @@ document.body.addEventListener("click", event => {
 document.addEventListener("fullscreenchange", () => {
   removeHashFromUrl();
   updateFullscreenHint();
+  refreshCursorVisibility();
 });
 document.addEventListener("DOMContentLoaded", removeHashFromUrl);
 window.addEventListener("load", removeHashFromUrl);
@@ -433,6 +476,9 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () 
 
   applyTheme(getSystemTheme());
 });
+["mousemove", "mousedown", "pointerdown", "pointermove", "touchstart", "keydown"].forEach(eventName => {
+  document.addEventListener(eventName, refreshCursorVisibility, { passive: true });
+});
 
 renderTimezoneOptions();
 applyTheme(getPreferredTheme());
@@ -441,6 +487,7 @@ updateFullscreenHint();
 syncTimeFromWorldService();
 setInterval(syncTimeFromWorldService, 60000);
 syncClock();
+scheduleCursorHide();
 
 for (let index = 0; index < 6; index += 1) {
   const bubble = document.createElement("span");
