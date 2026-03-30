@@ -139,7 +139,7 @@ function handleGlobalSurfaceClick(event) {
     return;
   }
 
-  if (!getActiveFullscreenElement()) toggleFullscreen();
+  toggleFullscreen();
 }
 function detectDeviceType() { const ua = navigator.userAgent || ""; const coarse = window.matchMedia("(pointer: coarse)").matches; const short = Math.min(window.innerWidth, window.innerHeight); const long = Math.max(window.innerWidth, window.innerHeight); if (/iPad|Tablet|PlayBook|Silk/i.test(ua) || (coarse && short >= 700 && long >= 900)) return "tablet"; if (/Android|iPhone|iPod|IEMobile|Opera Mini|Windows Phone/i.test(ua) || (coarse && short < 700)) return "mobile"; return "desktop"; }
 function applyDeviceLayout() { const t = detectDeviceType(); document.body.dataset.device = t; document.body.classList.toggle("device-mobile", t === "mobile"); document.body.classList.toggle("device-tablet", t === "tablet"); document.body.classList.toggle("device-desktop", t === "desktop"); }
