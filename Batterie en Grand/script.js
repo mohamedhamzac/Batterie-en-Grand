@@ -32,8 +32,11 @@ const undoButton = ids("undoButton");
 const redoButton = ids("redoButton");
 const resetPaletteButton = ids("resetPaletteButton");
 const resetManualTimeButton = ids("resetManualTimeButton");
+const timezoneToggle = ids("timezoneToggle");
+const timezoneDropdown = ids("timezoneDropdown");
+const timezoneSelectedLabel = ids("timezoneSelectedLabel");
 const timezoneSearchInput = ids("timezoneSearchInput");
-const timezoneSelect = ids("timezoneSelect");
+const timezoneResults = ids("timezoneResults");
 const percent = ids("percent");
 const leftFill = ids("leftFill");
 const rightFill = ids("rightFill");
@@ -85,7 +88,11 @@ function areCustomizationsEqual(a, b) { return JSON.stringify(a) === JSON.string
 function sanitizeOptionalText(v, max = 80) { return typeof v === "string" ? v.trim().slice(0, max) : ""; }
 function sanitizeRequiredText(v, fallback, max = 80) { return sanitizeOptionalText(v, max) || fallback; }
 function updateFullscreenHint() { fullscreenHint.textContent = document.fullscreenElement ? "Quitter le plein écran" : "Cliquer pour plein écran"; }
-function toggleFullscreen() { removeHashFromUrl(); document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+function toggleFullscreen() {
+  removeHashFromUrl();
+  const action = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  Promise.resolve(action).catch(() => {});
+}
 function setCursorVisible() { document.body.classList.remove("fullscreen-idle"); }
 function clearCursorHideTimer() { if (cursorHideTimerId) { clearTimeout(cursorHideTimerId); cursorHideTimerId = null; } }
 function scheduleCursorHide() { clearCursorHideTimer(); if (!document.fullscreenElement) return setCursorVisible(); cursorHideTimerId = setTimeout(() => { if (document.fullscreenElement) document.body.classList.add("fullscreen-idle"); }, CURSOR_HIDE_DELAY_MS); }
@@ -155,7 +162,7 @@ function applyCustomization(customization, syncInputs = true) {
   setRootVariable("--panel-shadow", dark ? `0 12px 30px ${withAlpha("#000000", 0.28)}` : `0 12px 30px ${withAlpha(c.backgroundDark, 0.18)}`);
   setRootVariable("--brand-text", c.brandTextColor);
   setRootVariable("--brand-icon", c.brandIconColor);
-  setRootVariable("--date-color", c.dateColor);
+  setRootVariable("--date-color", dark ? "#ffffff" : "#000000");
   setRootVariable("--clock-label-color", c.clockLabelColor);
   setRootVariable("--clock-time-color", c.clockTimeColor);
   setRootVariable("--percent-color", c.percentColor);
@@ -185,6 +192,14 @@ function undoCustomization() { if (!undoStack.length) return; redoStack.push(clo
 function redoCustomization() { if (!redoStack.length) return; undoStack.push(cloneCustomization(activeCustomization)); const next = redoStack.pop(); applyCustomization(next); saveCustomization(next); }
 function resetCustomization() { if (!areCustomizationsEqual(activeCustomization, DEFAULT_CUSTOMIZATION)) { pushUndoState(activeCustomization); applyCustomization(DEFAULT_CUSTOMIZATION); saveCustomization(DEFAULT_CUSTOMIZATION); } }
 function setPalettePanelOpen(open) { paletteButton.setAttribute("aria-expanded", String(open)); palettePanel.classList.toggle("is-open", open); palettePanel.setAttribute("aria-hidden", String(!open)); }
+function setTimezoneDropdownOpen(open) {
+  timezoneToggle.setAttribute("aria-expanded", String(open));
+  timezoneDropdown.classList.toggle("is-open", open);
+  timezoneDropdown.setAttribute("aria-hidden", String(!open));
+  if (open) {
+    setTimeout(() => timezoneSearchInput.focus(), 0);
+  }
+}
 function applyTheme(theme) { document.documentElement.classList.toggle("theme-dark", theme === "dark"); themeLightButton.setAttribute("aria-pressed", String(theme !== "dark")); themeDarkButton.setAttribute("aria-pressed", String(theme === "dark")); applyCustomization(activeCustomization); }
 function getZoneDateParts(zone) { const parts = new Intl.DateTimeFormat("en-CA", { timeZone: zone === WORLD_TIME_ZONE ? "UTC" : zone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(getCurrentReferenceDate()); const val = t => parts.find(p => p.type === t)?.value || "00"; return { year: +val("year"), month: +val("month"), day: +val("day"), hour: +val("hour"), minute: +val("minute"), second: +val("second") }; }
 function getDisplayParts() { const p = getZoneDateParts(activeZone); const manual = parseManualTime(activeCustomization.manualTime); return manual ? { ...p, ...manual } : p; }
@@ -193,7 +208,29 @@ function updateClock() { const parts = getDisplayParts(); clockDate.textContent 
 async function syncTimeFromWorldService() { if (syncRequest) return syncRequest; syncRequest = fetch(WORLD_TIME_API_URL, { cache: "no-store", credentials: "omit", mode: "cors", redirect: "error", referrerPolicy: "no-referrer" }).then(r => r.ok ? r.json() : Promise.reject()).then(data => { const ms = Date.parse(data.utc_datetime || data.datetime); if (!Number.isNaN(ms)) { syncedUtcMs = ms; syncedAtPerfMs = performance.now(); renderTimezoneOptions(); updateClock(); } }).catch(() => { if (syncedUtcMs === null) updateClock(); }).finally(() => { syncRequest = null; }); return syncRequest; }
 function syncClock() { updateClock(); clearTimeout(clockTimerId); clockTimerId = setTimeout(syncClock, 1000 - (Date.now() % 1000)); }
 function getFilteredTimezones() { const q = timezoneSearchQuery.trim().toLowerCase(); return timezones.filter(({ name, zone }) => !q || `${name} ${zone} ${getOffsetLabel(zone)}`.toLowerCase().includes(q)); }
-function renderTimezoneOptions() { filteredTimezones = getFilteredTimezones(); timezoneSelect.innerHTML = ""; if (!filteredTimezones.length) { const opt = document.createElement("option"); opt.textContent = "Aucun fuseau trouvé"; opt.disabled = true; opt.selected = true; timezoneSelect.appendChild(opt); return; } filteredTimezones.forEach(item => { const opt = document.createElement("option"); opt.value = item.zone; opt.textContent = `${item.name} - ${getOffsetLabel(item.zone)}`; opt.selected = item.zone === activeZone; timezoneSelect.appendChild(opt); }); }
+function renderTimezoneOptions() {
+  filteredTimezones = getFilteredTimezones();
+  timezoneSelectedLabel.textContent = `${prettifyZone(activeZone)} - ${getOffsetLabel(activeZone)}`;
+  timezoneResults.innerHTML = "";
+
+  if (!filteredTimezones.length) {
+    const empty = document.createElement("div");
+    empty.className = "timezone-empty";
+    empty.textContent = "Aucun fuseau trouvé";
+    timezoneResults.appendChild(empty);
+    return;
+  }
+
+  filteredTimezones.forEach(item => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "timezone-result";
+    button.textContent = `${item.name} - ${getOffsetLabel(item.zone)}`;
+    button.dataset.zone = item.zone;
+    button.classList.toggle("is-active", item.zone === activeZone);
+    timezoneResults.appendChild(button);
+  });
+}
 function getBatteryColor(level) { if (level >= 80) return activeCustomization.levelHighColor; if (level >= 50) return activeCustomization.levelMediumColor; if (level >= 35) return activeCustomization.levelWarningColor; if (level >= activeCustomization.criticalThreshold) return activeCustomization.levelLowColor; return activeCustomization.levelCriticalColor; }
 function clearCriticalWarnings() {
   warningOverlay.innerHTML = "";
@@ -257,11 +294,20 @@ function updateBatteryDisplay(snapshot) {
   updateCriticalAlertState(snapshot, level);
 }
 
-[timezoneSearchInput, timezoneSelect, controlsPanel, themeSwitch, paletteButton, palettePanel, fullscreenHint].forEach(el => {
+[timezoneToggle, timezoneDropdown, timezoneSearchInput, timezoneResults, controlsPanel, themeSwitch, paletteButton, palettePanel, fullscreenHint].forEach(el => {
   ["pointerdown", "mousedown", "click", "touchstart"].forEach(name => el?.addEventListener(name, event => event.stopPropagation()));
 });
 timezoneSearchInput.addEventListener("input", event => { timezoneSearchQuery = event.target.value; renderTimezoneOptions(); });
-timezoneSelect.addEventListener("change", event => { if (!event.target.value) return; activeZone = event.target.value; saveTimezone(activeZone); renderTimezoneOptions(); updateClock(); setTimeout(() => { timezoneSelect.blur(); document.body.focus(); }, 0); });
+timezoneToggle.addEventListener("click", () => setTimezoneDropdownOpen(timezoneToggle.getAttribute("aria-expanded") !== "true"));
+timezoneResults.addEventListener("click", event => {
+  const button = event.target.closest(".timezone-result");
+  if (!button) return;
+  activeZone = button.dataset.zone;
+  saveTimezone(activeZone);
+  renderTimezoneOptions();
+  updateClock();
+  setTimezoneDropdownOpen(false);
+});
 themeLightButton.addEventListener("click", () => { applyTheme("light"); saveTheme("light"); });
 themeDarkButton.addEventListener("click", () => { applyTheme("dark"); saveTheme("dark"); });
 paletteButton.addEventListener("click", () => setPalettePanelOpen(paletteButton.getAttribute("aria-expanded") !== "true"));
@@ -271,9 +317,13 @@ resetManualTimeButton.addEventListener("click", () => commitCustomization({ ...a
 undoButton.addEventListener("click", undoCustomization);
 redoButton.addEventListener("click", redoCustomization);
 resetPaletteButton.addEventListener("click", resetCustomization);
-document.body.addEventListener("click", event => { if (event.target.closest(".timezone-picker, .timezone-search-field, .palette-panel, .palette-button, .theme-controls, .hint-button")) return; setPalettePanelOpen(false); });
+document.body.addEventListener("click", event => {
+  if (event.target.closest(".timezone-combobox, .palette-panel, .palette-button, .theme-controls, .hint-button")) return;
+  setPalettePanelOpen(false);
+  setTimezoneDropdownOpen(false);
+});
 document.addEventListener("keydown", event => {
-  if (event.key === "Escape") setPalettePanelOpen(false);
+  if (event.key === "Escape") { setPalettePanelOpen(false); setTimezoneDropdownOpen(false); }
   if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "z") { event.preventDefault(); undoCustomization(); }
   if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === "y" || (event.shiftKey && event.key.toLowerCase() === "z"))) { event.preventDefault(); redoCustomization(); }
 });

@@ -19,47 +19,62 @@
     <span id="brandLogoText">Batterie en Grand</span>
   </div>
 
-  <div class="container">
-    <div class="battery-panel">
-      <section class="clock-panel">
-        <p id="clockDate" class="clock-date">--</p>
+  <div class="display-stage">
+    <p id="clockDate" class="clock-date">--</p>
+
+    <div class="container">
+      <div class="battery-panel">
+        <section class="clock-panel">
         <p id="clockLabel" class="clock-label">Heure actuelle</p>
         <div id="clockTime" class="clock-time">--:--:--</div>
-      </section>
+        </section>
 
-      <!-- Batterie gauche (charge) -->
-      <div class="battery-left">
-        <div id="leftFill" class="fill-left"></div>
-        <div id="bolt" class="bolt">⚡</div>
-      </div>
+        <!-- Batterie gauche (charge) -->
+        <div class="battery-left">
+          <div id="leftFill" class="fill-left"></div>
+          <div id="bolt" class="bolt">⚡</div>
+        </div>
 
-      <!-- Pourcentage -->
-      <div id="percent" class="percent">--%</div>
+        <!-- Pourcentage -->
+        <div id="percent" class="percent">--%</div>
 
-      <!-- Batterie droite (niveau) -->
-      <div class="battery-right">
-        <div id="rightFill" class="fill-right"></div>
-        <div id="rightBubbles" class="battery-bubbles" aria-hidden="true"></div>
+        <!-- Batterie droite (niveau) -->
+        <div class="battery-right">
+          <div id="rightFill" class="fill-right"></div>
+          <div id="rightBubbles" class="battery-bubbles" aria-hidden="true"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="controls-panel">
-    <label class="timezone-search-field">
-      <span class="sr-only">Rechercher un fuseau horaire</span>
-      <input
-        id="timezoneSearchInput"
-        class="timezone-search-input"
-        type="search"
-        placeholder="Rechercher un pays ou un UTC"
-        aria-label="Rechercher un fuseau horaire"
-        autocomplete="off"
-        spellcheck="false"
+    <div class="timezone-combobox">
+      <button
+        id="timezoneToggle"
+        class="timezone-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="timezoneDropdown"
       >
-    </label>
-    <label class="timezone-picker">
-      <select id="timezoneSelect" class="timezone-select"></select>
-    </label>
+        <span id="timezoneSelectedLabel">Heure mondiale (UTC) - UTC+0</span>
+      </button>
+
+      <div id="timezoneDropdown" class="timezone-dropdown" aria-hidden="true">
+        <label class="timezone-search-field">
+          <span class="sr-only">Rechercher un fuseau horaire</span>
+          <input
+            id="timezoneSearchInput"
+            class="timezone-search-input"
+            type="search"
+            placeholder="Rechercher un pays ou un UTC"
+            aria-label="Rechercher un fuseau horaire"
+            autocomplete="off"
+            spellcheck="false"
+          >
+        </label>
+        <div id="timezoneResults" class="timezone-results" role="listbox" aria-label="Fuseaux horaires"></div>
+      </div>
+    </div>
   </div>
 
   <div class="theme-controls">

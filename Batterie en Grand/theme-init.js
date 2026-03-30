@@ -63,7 +63,6 @@
       : (isHexColor(storedCustomization?.panelLight) ? storedCustomization.panelLight : defaults.panelLight);
     const brandTextColor = isHexColor(storedCustomization?.brandTextColor) ? storedCustomization.brandTextColor : defaults.brandTextColor;
     const brandIconColor = isHexColor(storedCustomization?.brandIconColor) ? storedCustomization.brandIconColor : defaults.brandIconColor;
-    const dateColor = isHexColor(storedCustomization?.dateColor) ? storedCustomization.dateColor : defaults.dateColor;
     const clockLabelColor = isHexColor(storedCustomization?.clockLabelColor) ? storedCustomization.clockLabelColor : defaults.clockLabelColor;
     const clockTimeColor = isHexColor(storedCustomization?.clockTimeColor) ? storedCustomization.clockTimeColor : defaults.clockTimeColor;
 
@@ -98,7 +97,7 @@
     document.documentElement.style.setProperty("--panel-border", isDarkTheme ? withAlpha(defaults.panelLight, 0.14) : withAlpha(defaults.panelDark, 0.15));
     document.documentElement.style.setProperty("--brand-text", brandTextColor);
     document.documentElement.style.setProperty("--brand-icon", brandIconColor);
-    document.documentElement.style.setProperty("--date-color", dateColor);
+    document.documentElement.style.setProperty("--date-color", isDarkTheme ? "#ffffff" : "#000000");
     document.documentElement.style.setProperty("--clock-label-color", clockLabelColor);
     document.documentElement.style.setProperty("--clock-time-color", clockTimeColor);
     document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(clockTimeColor, isDarkTheme ? 0.28 : 0.16)}`);

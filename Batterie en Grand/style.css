@@ -14,7 +14,7 @@ html.theme-dark {
   --bg-end: #bfdbfe;
   --text-main: #0f172a;
   --brand-icon: #0f172a;
-  --date-color: #2563eb;
+  --date-color: #0f172a;
   --clock-label-color: #1d4ed8;
   --clock-time-color: #0f172a;
   --percent-color: #0f172a;
@@ -50,6 +50,7 @@ html.theme-dark {
   --bg-start: #020617;
   --bg-end: #000000;
   --text-main: #ffffff;
+  --date-color: #ffffff;
   --brand-text: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.6);
   --panel-bg: rgba(2, 6, 23, 0.28);
@@ -200,6 +201,14 @@ body.no-battery .percent {
   color: var(--percent-color);
   text-shadow: var(--percent-shadow);
   transition: color 0.4s ease;
+}
+
+.display-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: min(1200px, calc(100vw - 48px));
 }
 
 .percent.low-battery-alert {
@@ -403,10 +412,11 @@ body.no-battery .percent {
 
 .clock-date {
   margin: 0;
-  font-size: 15px;
+  font-size: clamp(36px, 5vw, 52px);
   font-weight: 700;
   color: var(--date-color);
   text-align: center;
+  text-shadow: var(--clock-glow);
 }
 
 .clock-label {
@@ -462,6 +472,7 @@ body.no-battery .percent {
   pointer-events: none;
 }
 
+.timezone-combobox,
 .timezone-picker {
   width: 100%;
 }
@@ -470,6 +481,7 @@ body.no-battery .percent {
   width: 100%;
 }
 
+.timezone-toggle,
 .timezone-search-input,
 .timezone-select {
   width: 100%;
@@ -485,7 +497,56 @@ body.no-battery .percent {
   box-sizing: border-box;
 }
 
+.timezone-toggle {
+  cursor: pointer;
+}
+
+.timezone-dropdown {
+  display: none;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--control-border);
+  border-radius: 20px;
+  background: var(--control-bg);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+}
+
+.timezone-dropdown.is-open {
+  display: grid;
+  gap: 8px;
+}
+
+.timezone-results {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.timezone-result {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--control-border);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--control-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.timezone-result:hover,
+.timezone-result.is-active {
+  background: var(--accent-soft);
+}
+
+.timezone-empty {
+  padding: 10px 12px;
+  color: var(--control-text);
+  opacity: 0.7;
+}
+
 .timezone-search-input:focus,
+.timezone-toggle:focus,
 .timezone-select:focus {
   border-color: var(--accent-main);
 }
@@ -786,10 +847,13 @@ html.theme-dark .theme-switch-thumb {
 .hint-group {
   position: fixed;
   bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  z-index: 40;
 }
 
 .hint {
@@ -806,7 +870,6 @@ body.device-tablet {
 
 body.device-tablet .container {
   width: min(1000px, calc(100vw - 36px));
-  margin-top: 92px;
 }
 
 body.device-tablet .battery-panel {
@@ -870,7 +933,6 @@ body.device-mobile #brandLogoText {
 
 body.device-mobile .container {
   width: calc(100vw - 20px);
-  margin-top: 82px;
 }
 
 body.device-mobile .battery-panel {
@@ -917,6 +979,12 @@ body.device-mobile .controls-panel {
 }
 
 body.device-mobile .timezone-select {
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+body.device-mobile .timezone-toggle,
+body.device-mobile .timezone-search-input {
   padding: 10px 12px;
   font-size: 13px;
 }
