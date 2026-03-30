@@ -14,7 +14,7 @@ const DEFAULT_CUSTOMIZATION = Object.freeze({
   timezoneMenuBackground: "#ffffff", timezoneMenuText: "#0f172a", timezoneMenuHighlight: "#dbeafe",
   dateColor: "#2563eb", clockLabelColor: "#1d4ed8", clockTimeColor: "#0f172a",
   manualTime: "", brandTextColor: "#0f172a", brandIconColor: "#0f172a",
-  percentColor: "#0f172a", percentChargingColor: "#22c55e", percentLinkedToLevel: true, brandText: "Batterie en Grand", brandIcon: "",
+  percentColor: "#0f172a", percentChargingColor: "#22c55e", percentLinkedToLevel: true, percentChargingLinkedToIndicator: false, brandText: "Batterie en Grand", brandIcon: "",
   chargingActiveColor: "#22c55e", chargingIdleColor: "#9ca3af", chargingTextColor: "#ffffff", batteryShellColor: "#0f172a", chargingIcon: "⚡",
   levelHighColor: "#22c55e", levelMediumColor: "#facc15", levelWarningColor: "#fb923c", levelLowColor: "#dc2626", levelCriticalColor: "#7f1d1d", criticalThreshold: 15
 });
@@ -34,6 +34,7 @@ const redoButton = ids("redoButton");
 const resetPaletteButton = ids("resetPaletteButton");
 const resetManualTimeButton = ids("resetManualTimeButton");
 const percentLinkedToLevelInput = ids("percentLinkedToLevelInput");
+const percentChargingLinkedToIndicatorInput = ids("percentChargingLinkedToIndicatorInput");
 const timezoneToggle = ids("timezoneToggle");
 const timezoneDropdown = ids("timezoneDropdown");
 const timezoneSelectedLabel = ids("timezoneSelectedLabel");
@@ -305,6 +306,7 @@ function sanitizeCustomization(source) {
     percentColor: isHexColor(source.percentColor) ? source.percentColor : DEFAULT_CUSTOMIZATION.percentColor,
     percentChargingColor: isHexColor(source.percentChargingColor) ? source.percentChargingColor : DEFAULT_CUSTOMIZATION.percentChargingColor,
     percentLinkedToLevel: Boolean(source.percentLinkedToLevel),
+    percentChargingLinkedToIndicator: Boolean(source.percentChargingLinkedToIndicator),
     brandText: sanitizeRequiredText(source.brandText, DEFAULT_CUSTOMIZATION.brandText),
     brandIcon: sanitizeOptionalText(source.brandIcon),
     chargingActiveColor: isHexColor(source.chargingActiveColor) ? source.chargingActiveColor : DEFAULT_CUSTOMIZATION.chargingActiveColor,
@@ -324,15 +326,18 @@ function getStoredCustomization() { try { return sanitizeCustomization(JSON.pars
 function saveCustomization(c) { try { localStorage.setItem(CUSTOMIZATION_STORAGE_KEY, JSON.stringify(c)); } catch {} }
 function pushUndoState(prev) { const snap = cloneCustomization(prev); if (!undoStack.length || !areCustomizationsEqual(undoStack.at(-1), snap)) undoStack.push(snap); if (undoStack.length > HISTORY_LIMIT) undoStack.shift(); redoStack = []; }
 function updateHistoryButtons() { undoButton.disabled = !undoStack.length; redoButton.disabled = !redoStack.length; }
-function updatePercentColorInputState(linked) {
-  [inputs.percentColorInput, inputs.percentChargingColorInput].forEach(input => {
-    if (!input) return;
-    input.disabled = linked;
-    input.closest(".palette-field")?.classList.toggle("is-disabled", linked);
-  });
+function updatePercentColorInputState(linkedToLevel, linkedToIndicator) {
+  if (inputs.percentColorInput) {
+    inputs.percentColorInput.disabled = linkedToLevel;
+    inputs.percentColorInput.closest(".palette-field")?.classList.toggle("is-disabled", linkedToLevel);
+  }
+  if (inputs.percentChargingColorInput) {
+    inputs.percentChargingColorInput.disabled = linkedToIndicator;
+    inputs.percentChargingColorInput.closest(".palette-field")?.classList.toggle("is-disabled", linkedToIndicator);
+  }
 }
-function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); percentLinkedToLevelInput.checked = c.percentLinkedToLevel; updatePercentColorInputState(c.percentLinkedToLevel); }
-function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.timezoneMenuBackground = inputs.timezoneMenuBackgroundInput.value; raw.timezoneMenuText = inputs.timezoneMenuTextInput.value; raw.timezoneMenuHighlight = inputs.timezoneMenuHighlightInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.percentLinkedToLevel = percentLinkedToLevelInput.checked; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
+function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); percentLinkedToLevelInput.checked = c.percentLinkedToLevel; percentChargingLinkedToIndicatorInput.checked = c.percentChargingLinkedToIndicator; updatePercentColorInputState(c.percentLinkedToLevel, c.percentChargingLinkedToIndicator); }
+function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.timezoneMenuBackground = inputs.timezoneMenuBackgroundInput.value; raw.timezoneMenuText = inputs.timezoneMenuTextInput.value; raw.timezoneMenuHighlight = inputs.timezoneMenuHighlightInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.percentLinkedToLevel = percentLinkedToLevelInput.checked; raw.percentChargingLinkedToIndicator = percentChargingLinkedToIndicatorInput.checked; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
 function fitTextToBounds(el, max, min) { if (!el) return; el.style.fontSize = `${max}px`; if (!el.textContent.trim()) return; let size = max; while (size > min && (el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight)) { size -= 1; el.style.fontSize = `${size}px`; } }
 function applyTextSizing() { fitTextToBounds(brandLogoGlyph, 34, 8); fitTextToBounds(bolt, 36, 9); }
 function buildGradient(theme, c) { return theme === "dark" ? { start: rgbToHex(mixColors(c.backgroundDark, "#0f172a", 0.24)), mid: c.backgroundDark, end: rgbToHex(mixColors(c.backgroundDark, "#000000", 0.7)) } : { start: rgbToHex(mixColors(c.backgroundLight, "#ffffff", 0.42)), mid: c.backgroundLight, end: rgbToHex(mixColors(c.backgroundLight, "#93c5fd", 0.38)) }; }
@@ -484,7 +489,7 @@ function updateBatteryDisplay(snapshot) {
   if (snapshot.charging) {
     leftFill.style.background = activeCustomization.chargingActiveColor;
     bolt.style.display = activeCustomization.chargingIcon ? "flex" : "none";
-    percent.style.color = activeCustomization.percentLinkedToLevel ? activeCustomization.chargingActiveColor : activeCustomization.percentChargingColor;
+    percent.style.color = activeCustomization.percentChargingLinkedToIndicator ? activeCustomization.chargingActiveColor : activeCustomization.percentChargingColor;
     percent.classList.remove("low-battery-alert");
   } else {
     leftFill.style.background = activeCustomization.chargingIdleColor;
@@ -519,6 +524,7 @@ paletteButton.addEventListener("click", () => setPalettePanelOpen(paletteButton.
 fullscreenHint.addEventListener("click", toggleFullscreen);
 inputNames.forEach(name => inputs[name].addEventListener("input", () => commitCustomization(readCustomizationFromInputs())));
 percentLinkedToLevelInput.addEventListener("input", () => commitCustomization(readCustomizationFromInputs()));
+percentChargingLinkedToIndicatorInput.addEventListener("input", () => commitCustomization(readCustomizationFromInputs()));
 resetManualTimeButton.addEventListener("click", () => commitCustomization({ ...activeCustomization, manualTime: "" }));
 undoButton.addEventListener("click", undoCustomization);
 redoButton.addEventListener("click", redoCustomization);
