@@ -9,6 +9,7 @@ html.theme-dark {
 :root {
   color-scheme: light;
   --bg-main: radial-gradient(circle at top, #eff6ff, #dbeafe 52%, #bfdbfe 100%);
+  --bg-solid: #dbeafe;
   --text-main: #0f172a;
   --text-muted: rgba(30, 64, 175, 0.95);
   --panel-bg: rgba(255, 255, 255, 0.82);
@@ -22,13 +23,20 @@ html.theme-dark {
   --bubble-tint: rgba(15, 23, 42, 0.48);
   --clock-glow: 0 0 16px rgba(29, 78, 216, 0.3);
   --brand-shadow: drop-shadow(0 0 16px rgba(21, 128, 61, 0.34));
+  --brand-logo-filter: none;
   --percent-shadow: 0 0 18px currentColor;
   --hint-color: rgba(30, 64, 175, 0.95);
+  --accent-main: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.24);
+  --theme-thumb-light: linear-gradient(135deg, rgba(250, 204, 21, 0.95), rgba(251, 146, 60, 0.9));
+  --theme-thumb-dark: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(15, 23, 42, 0.95));
+  --palette-ring: conic-gradient(from 180deg, #ff6b6b, #f59e0b, #fde047, #22c55e, #38bdf8, #8b5cf6, #ff6b6b);
 }
 
 html.theme-dark {
   color-scheme: dark;
   --bg-main: radial-gradient(circle at top, #020617, #000000);
+  --bg-solid: #020617;
   --text-main: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.6);
   --panel-bg: rgba(2, 6, 23, 0.28);
@@ -44,6 +52,10 @@ html.theme-dark {
   --brand-shadow: drop-shadow(0 0 18px rgba(34, 197, 94, 0.2));
   --percent-shadow: 0 0 20px currentColor;
   --hint-color: rgba(255, 255, 255, 0.5);
+}
+
+html.palette-custom {
+  background: var(--bg-solid);
 }
 
 body {
@@ -81,6 +93,10 @@ body.fullscreen-idle {
   height: 54px;
   display: block;
   filter: var(--brand-shadow);
+}
+
+html.palette-custom .brand-mark img {
+  filter: var(--brand-logo-filter) var(--brand-shadow);
 }
 
 .brand-mark span {
@@ -408,17 +424,25 @@ body.no-battery .percent {
 }
 
 .timezone-select:focus {
-  border-color: rgba(96, 165, 250, 0.9);
+  border-color: var(--accent-main);
 }
 
-.theme-switch {
+.theme-controls {
   position: fixed;
   right: 18px;
   bottom: 18px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   align-items: center;
-  width: 148px;
+  gap: 10px;
+  z-index: 20;
+  transition: opacity 0.2s ease;
+}
+
+.palette-button,
+.theme-switch {
+  position: relative;
+  display: grid;
+  align-items: center;
   padding: 6px;
   border: 1px solid var(--control-border);
   border-radius: 999px;
@@ -426,8 +450,36 @@ body.no-battery .percent {
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
   box-sizing: border-box;
   isolation: isolate;
-  z-index: 20;
-  transition: opacity 0.2s ease;
+}
+
+.palette-button {
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  color: #ffffff;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+    var(--palette-ring);
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.palette-button:hover {
+  transform: translateY(-1px);
+}
+
+.palette-button[aria-expanded="true"] {
+  border-color: var(--accent-main);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 14px 32px rgba(0, 0, 0, 0.18);
+}
+
+.palette-icon {
+  font-size: 22px;
+}
+
+.theme-switch {
+  grid-template-columns: 1fr 1fr;
+  width: 148px;
 }
 
 .theme-switch-thumb {
@@ -437,16 +489,16 @@ body.no-battery .percent {
   width: calc(50% - 6px);
   height: calc(100% - 12px);
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(250, 204, 21, 0.95), rgba(251, 146, 60, 0.9));
-  box-shadow: 0 6px 18px rgba(251, 146, 60, 0.28);
+  background: var(--theme-thumb-light);
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.28);
   transition: transform 0.28s ease, background 0.28s ease, box-shadow 0.28s ease;
   z-index: -1;
 }
 
 html.theme-dark .theme-switch-thumb {
   transform: translateX(100%);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(15, 23, 42, 0.95));
-  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.3);
+  background: var(--theme-thumb-dark);
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.3);
 }
 
 .theme-option {
@@ -474,14 +526,61 @@ html.theme-dark .theme-switch-thumb {
 }
 
 .theme-option:focus-visible {
-  outline: 2px solid rgba(96, 165, 250, 0.9);
+  outline: 2px solid var(--accent-main);
   outline-offset: 2px;
 }
 
-:fullscreen .theme-switch,
-:-webkit-full-screen .theme-switch {
+:fullscreen .theme-controls,
+:-webkit-full-screen .theme-controls {
   opacity: 0;
   pointer-events: none;
+}
+
+.palette-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 84px;
+  display: grid;
+  gap: 10px;
+  min-width: 210px;
+  padding: 14px;
+  border: 1px solid var(--control-border);
+  border-radius: 20px;
+  background: var(--control-bg);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px);
+  box-sizing: border-box;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px) scale(0.98);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.palette-panel.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.palette-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--control-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.palette-field input[type="color"] {
+  width: 56px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--control-border);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
 }
 
 .hint-group {
@@ -526,9 +625,13 @@ body.device-tablet .controls-panel {
   width: min(320px, calc(100vw - 36px));
 }
 
-body.device-tablet .theme-switch {
+body.device-tablet .theme-controls {
   right: 18px;
   bottom: 18px;
+}
+
+body.device-tablet .palette-panel {
+  right: 18px;
 }
 
 body.no-battery.device-tablet .battery-panel {
@@ -612,10 +715,24 @@ body.device-mobile .timezone-select {
   font-size: 13px;
 }
 
-body.device-mobile .theme-switch {
+body.device-mobile .theme-controls {
   right: 12px;
   bottom: 14px;
+}
+
+body.device-mobile .theme-switch {
   width: 132px;
+}
+
+body.device-mobile .palette-button {
+  width: 50px;
+  height: 50px;
+}
+
+body.device-mobile .palette-panel {
+  right: 12px;
+  bottom: 74px;
+  min-width: 188px;
 }
 
 body.device-mobile .hint-group {
@@ -695,9 +812,16 @@ body.no-battery.device-mobile .clock-time {
     right: 12px;
   }
 
-  .theme-switch {
+  .theme-controls {
     right: 12px;
     bottom: 12px;
+  }
+
+  .theme-switch {
     width: 136px;
+  }
+
+  .palette-panel {
+    right: 12px;
   }
 }

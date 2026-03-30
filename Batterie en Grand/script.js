@@ -33,6 +33,33 @@ function saveTheme(theme) {
   }
 }
 
+function getStoredPalette() {
+  try {
+    const storedPalette = JSON.parse(localStorage.getItem(PALETTE_STORAGE_KEY) || "null");
+
+    if (
+      storedPalette &&
+      isHexColor(storedPalette.background) &&
+      isHexColor(storedPalette.accent) &&
+      isHexColor(storedPalette.logo)
+    ) {
+      return storedPalette;
+    }
+  } catch {
+    // Ignore malformed palette values.
+  }
+
+  return null;
+}
+
+function savePalette(palette) {
+  try {
+    localStorage.setItem(PALETTE_STORAGE_KEY, JSON.stringify(palette));
+  } catch {
+    // Ignore localStorage failures and keep the current palette for the session.
+  }
+}
+
 function getStoredTimezone() {
   try {
     const storedTimezone = localStorage.getItem(TIMEZONE_STORAGE_KEY);
@@ -62,6 +89,7 @@ function applyTheme(theme) {
   const isDarkTheme = theme === "dark";
 
   document.documentElement.classList.toggle("theme-dark", isDarkTheme);
+  applyPalette(activePalette);
 
   if (themeLightButton && themeDarkButton) {
     themeLightButton.setAttribute("aria-pressed", String(!isDarkTheme));
@@ -73,6 +101,117 @@ function toggleTheme() {
   const nextTheme = document.documentElement.classList.contains("theme-dark") ? "light" : "dark";
   applyTheme(nextTheme);
   saveTheme(nextTheme);
+}
+
+function isHexColor(value) {
+  return /^#[0-9a-f]{6}$/i.test(value);
+}
+
+function hexToRgb(hexColor) {
+  const normalized = hexColor.replace("#", "");
+  return {
+    r: parseInt(normalized.slice(0, 2), 16),
+    g: parseInt(normalized.slice(2, 4), 16),
+    b: parseInt(normalized.slice(4, 6), 16)
+  };
+}
+
+function mixColors(colorA, colorB, weight = 0.5) {
+  const start = hexToRgb(colorA);
+  const end = hexToRgb(colorB);
+
+  return {
+    r: Math.round(start.r + (end.r - start.r) * weight),
+    g: Math.round(start.g + (end.g - start.g) * weight),
+    b: Math.round(start.b + (end.b - start.b) * weight)
+  };
+}
+
+function rgbToHex({ r, g, b }) {
+  const toHex = value => value.toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function withAlpha(hexColor, alpha) {
+  const { r, g, b } = hexToRgb(hexColor);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function buildGradientStops(baseColor, accentColor, isDarkTheme) {
+  if (isDarkTheme) {
+    return {
+      start: rgbToHex(mixColors(baseColor, "#0f172a", 0.7)),
+      mid: rgbToHex(mixColors(baseColor, "#020617", 0.74)),
+      end: rgbToHex(mixColors(accentColor, "#000000", 0.82))
+    };
+  }
+
+  return {
+    start: rgbToHex(mixColors(baseColor, "#ffffff", 0.62)),
+    mid: rgbToHex(mixColors(baseColor, "#dbeafe", 0.4)),
+    end: rgbToHex(mixColors(accentColor, "#bfdbfe", 0.38))
+  };
+}
+
+function buildLogoFilter(logoColor) {
+  const { r, g, b } = hexToRgb(logoColor);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  const invert = brightness < 128 ? 100 : 0;
+
+  return `brightness(0) saturate(100%) invert(${invert}%) sepia(100%) saturate(2400%) drop-shadow(0 0 0 ${logoColor})`;
+}
+
+function applyPalette(palette) {
+  const resolvedPalette = {
+    background: palette?.background || DEFAULT_PALETTE.background,
+    accent: palette?.accent || DEFAULT_PALETTE.accent,
+    logo: palette?.logo || DEFAULT_PALETTE.logo
+  };
+  const isDarkTheme = document.documentElement.classList.contains("theme-dark");
+  const gradientStops = buildGradientStops(resolvedPalette.background, resolvedPalette.accent, isDarkTheme);
+
+  document.documentElement.classList.add("palette-custom");
+  document.documentElement.style.setProperty(
+    "--bg-main",
+    `radial-gradient(circle at top, ${gradientStops.start}, ${gradientStops.mid} 52%, ${gradientStops.end} 100%)`
+  );
+  document.documentElement.style.setProperty("--bg-solid", gradientStops.mid);
+  document.documentElement.style.setProperty("--accent-main", resolvedPalette.accent);
+  document.documentElement.style.setProperty("--accent-soft", withAlpha(resolvedPalette.accent, 0.24));
+  document.documentElement.style.setProperty(
+    "--theme-thumb-light",
+    `linear-gradient(135deg, ${rgbToHex(mixColors(resolvedPalette.accent, "#fde047", 0.35))}, ${resolvedPalette.accent})`
+  );
+  document.documentElement.style.setProperty(
+    "--theme-thumb-dark",
+    `linear-gradient(135deg, ${resolvedPalette.accent}, ${rgbToHex(mixColors(resolvedPalette.background, "#020617", 0.78))})`
+  );
+  document.documentElement.style.setProperty("--brand-shadow", `drop-shadow(0 0 18px ${withAlpha(resolvedPalette.logo, 0.45)})`);
+  document.documentElement.style.setProperty("--brand-logo-filter", buildLogoFilter(resolvedPalette.logo));
+  document.documentElement.style.setProperty("--hint-color", withAlpha(resolvedPalette.accent, isDarkTheme ? 0.62 : 0.95));
+  document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(resolvedPalette.accent, isDarkTheme ? 0.42 : 0.3)}`);
+
+  if (backgroundColorInput) {
+    backgroundColorInput.value = resolvedPalette.background;
+  }
+
+  if (accentColorInput) {
+    accentColorInput.value = resolvedPalette.accent;
+  }
+
+  if (logoColorInput) {
+    logoColorInput.value = resolvedPalette.logo;
+  }
+}
+
+function setPalettePanelOpen(isOpen) {
+  if (!paletteButton || !palettePanel) {
+    return;
+  }
+
+  paletteButton.setAttribute("aria-expanded", String(isOpen));
+  palettePanel.classList.toggle("is-open", isOpen);
+  palettePanel.setAttribute("aria-hidden", String(!isOpen));
 }
 
 function updateFullscreenHint() {
@@ -154,6 +293,11 @@ const fullscreenHint = document.getElementById("fullscreenHint");
 const themeSwitch = document.getElementById("themeSwitch");
 const themeLightButton = document.getElementById("themeLightButton");
 const themeDarkButton = document.getElementById("themeDarkButton");
+const paletteButton = document.getElementById("paletteButton");
+const palettePanel = document.getElementById("palettePanel");
+const backgroundColorInput = document.getElementById("backgroundColorInput");
+const accentColorInput = document.getElementById("accentColorInput");
+const logoColorInput = document.getElementById("logoColorInput");
 const timezoneSelect = document.getElementById("timezoneSelect");
 const controlsPanel = document.querySelector(".controls-panel");
 const rightBubbles = document.getElementById("rightBubbles");
@@ -163,9 +307,15 @@ const rightFill = document.getElementById("rightFill");
 const bolt = document.getElementById("bolt");
 const THEME_STORAGE_KEY = "batterie-en-grand-theme";
 const TIMEZONE_STORAGE_KEY = "batterie-en-grand-timezone";
+const PALETTE_STORAGE_KEY = "batterie-en-grand-palette";
 const WORLD_TIME_ZONE = "UTC";
 const WORLD_TIME_API_ORIGIN = "https://worldtimeapi.org";
 const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
+const DEFAULT_PALETTE = {
+  background: "#dbeafe",
+  accent: "#38bdf8",
+  logo: "#22c55e"
+};
 
 const countries = [
   { name: "Heure mondiale (UTC)", zone: WORLD_TIME_ZONE },
@@ -303,11 +453,13 @@ const countries = [
 ];
 
 const storedTimezone = getStoredTimezone();
+const storedPalette = getStoredPalette();
 let activeCountry = countries.find(country => country.zone === storedTimezone) ||
   countries.find(country => country.zone === WORLD_TIME_ZONE) ||
   countries[0];
 
 let activeZone = activeCountry.zone;
+let activePalette = storedPalette || DEFAULT_PALETTE;
 let clockTimerId;
 let syncedUtcMs = null;
 let syncedAtPerfMs = 0;
@@ -489,12 +641,58 @@ if (themeSwitch && themeLightButton && themeDarkButton) {
   });
 }
 
+if (paletteButton && palettePanel) {
+  ["pointerdown", "mousedown", "click", "touchstart"].forEach(eventName => {
+    paletteButton.addEventListener(eventName, event => {
+      event.stopPropagation();
+    });
+
+    palettePanel.addEventListener(eventName, event => {
+      event.stopPropagation();
+    });
+  });
+
+  paletteButton.addEventListener("click", () => {
+    const isOpen = paletteButton.getAttribute("aria-expanded") === "true";
+    setPalettePanelOpen(!isOpen);
+  });
+}
+
+[backgroundColorInput, accentColorInput, logoColorInput].forEach(input => {
+  if (!input) {
+    return;
+  }
+
+  input.addEventListener("input", () => {
+    activePalette = {
+      background: backgroundColorInput?.value || DEFAULT_PALETTE.background,
+      accent: accentColorInput?.value || DEFAULT_PALETTE.accent,
+      logo: logoColorInput?.value || DEFAULT_PALETTE.logo
+    };
+
+    applyPalette(activePalette);
+    savePalette(activePalette);
+  });
+});
+
 document.body.addEventListener("click", event => {
   if (event.target.closest(".timezone-picker")) {
     return;
   }
 
+  if (event.target.closest(".palette-panel") || event.target.closest(".palette-button")) {
+    return;
+  }
+
+  setPalettePanelOpen(false);
+
   toggleFullscreen();
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    setPalettePanelOpen(false);
+  }
 });
 
 document.addEventListener("fullscreenchange", () => {
@@ -523,6 +721,7 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () 
 applyDeviceLayout();
 renderTimezoneOptions();
 applyTheme(getPreferredTheme());
+setPalettePanelOpen(false);
 removeHashFromUrl();
 updateFullscreenHint();
 syncTimeFromWorldService();

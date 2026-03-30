@@ -48,26 +48,54 @@
     </label>
   </div>
 
-  <div id="themeSwitch" class="theme-switch" role="group" aria-label="Choix du theme">
-    <span class="theme-switch-thumb" aria-hidden="true"></span>
+  <div class="theme-controls">
+    <div id="themeSwitch" class="theme-switch" role="group" aria-label="Choix du theme">
+      <span class="theme-switch-thumb" aria-hidden="true"></span>
+      <button
+        id="themeLightButton"
+        class="theme-option theme-option-light"
+        type="button"
+        aria-pressed="false"
+        aria-label="Activer le mode clair"
+      >
+        <span class="theme-icon" aria-hidden="true">☀</span>
+      </button>
+      <button
+        id="themeDarkButton"
+        class="theme-option theme-option-dark"
+        type="button"
+        aria-pressed="false"
+        aria-label="Activer le mode sombre"
+      >
+        <span class="theme-icon" aria-hidden="true">☾</span>
+      </button>
+    </div>
+
     <button
-      id="themeLightButton"
-      class="theme-option theme-option-light"
+      id="paletteButton"
+      class="palette-button"
       type="button"
-      aria-pressed="false"
-      aria-label="Activer le mode clair"
+      aria-expanded="false"
+      aria-controls="palettePanel"
+      aria-label="Ouvrir la palette de couleurs"
     >
-      <span class="theme-icon" aria-hidden="true">☀</span>
+      <span class="palette-icon" aria-hidden="true">🎨</span>
     </button>
-    <button
-      id="themeDarkButton"
-      class="theme-option theme-option-dark"
-      type="button"
-      aria-pressed="false"
-      aria-label="Activer le mode sombre"
-    >
-      <span class="theme-icon" aria-hidden="true">☾</span>
-    </button>
+  </div>
+
+  <div id="palettePanel" class="palette-panel" aria-hidden="true">
+    <label class="palette-field">
+      <span>Fond</span>
+      <input id="backgroundColorInput" type="color" value="#dbeafe" aria-label="Choisir la couleur du fond">
+    </label>
+    <label class="palette-field">
+      <span>Accent</span>
+      <input id="accentColorInput" type="color" value="#38bdf8" aria-label="Choisir la couleur d'accent">
+    </label>
+    <label class="palette-field">
+      <span>Logo</span>
+      <input id="logoColorInput" type="color" value="#22c55e" aria-label="Choisir la couleur du logo">
+    </label>
   </div>
 
   <div class="hint-group">
