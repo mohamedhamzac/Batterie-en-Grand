@@ -161,16 +161,18 @@ body.fullscreen-idle {
   gap: 24px;
   flex-wrap: wrap;
   width: min(1200px, calc(100vw - 48px));
+  margin: 0 auto;
 }
 
 .battery-panel {
   display: flex;
   align-items: center;
-  align-content: flex-start;
+  align-content: center;
   justify-content: center;
   gap: 50px;
   flex-wrap: wrap;
-  padding: 42px 54px 28px;
+  width: min(100%, 1120px);
+  padding: 44px 56px 36px;
   border: 1px solid var(--panel-border);
   border-radius: 32px;
   background: var(--panel-bg);
@@ -214,7 +216,7 @@ body.no-battery .percent {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 22px;
   width: min(1200px, calc(100vw - 48px));
 }
 
@@ -409,35 +411,36 @@ body.no-battery .percent {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  width: min(420px, calc(100vw - 40px));
+  gap: 12px;
+  width: min(560px, calc(100vw - 40px));
 }
 
 .clock-date {
   margin: 0;
-  font-size: clamp(44px, 6vw, 68px);
+  font-size: clamp(42px, 5.4vw, 62px);
   font-weight: 700;
   color: var(--date-color);
   text-align: center;
   text-shadow: var(--clock-glow);
-  line-height: 1;
+  line-height: 1.04;
 }
 
 .clock-label {
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  font-size: 12px;
+  font-size: clamp(13px, 1.3vw, 16px);
+  font-weight: 600;
   color: var(--clock-label-color);
   text-align: center;
   order: 1;
 }
 
 .clock-time {
-  font-size: clamp(34px, 4.3vw, 46px);
+  font-size: clamp(30px, 3.8vw, 42px);
   font-weight: 700;
   letter-spacing: 0.14em;
-  line-height: 1;
+  line-height: 1.05;
   color: var(--clock-time-color);
   text-shadow: var(--clock-glow);
   order: 2;
