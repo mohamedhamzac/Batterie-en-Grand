@@ -64,13 +64,27 @@
     const panelColor = isDarkTheme
       ? (isHexColor(storedCustomization?.panelDark) ? storedCustomization.panelDark : defaults.panelDark)
       : (isHexColor(storedCustomization?.panelLight) ? storedCustomization.panelLight : defaults.panelLight);
-    const brandTextColor = isHexColor(storedCustomization?.brandTextColor) ? storedCustomization.brandTextColor : defaults.brandTextColor;
-    const brandIconColor = isHexColor(storedCustomization?.brandIconColor) ? storedCustomization.brandIconColor : defaults.brandIconColor;
-    const timezoneMenuBackground = isHexColor(storedCustomization?.timezoneMenuBackground) ? storedCustomization.timezoneMenuBackground : defaults.timezoneMenuBackground;
-    const timezoneMenuText = isHexColor(storedCustomization?.timezoneMenuText) ? storedCustomization.timezoneMenuText : defaults.timezoneMenuText;
-    const timezoneMenuHighlight = isHexColor(storedCustomization?.timezoneMenuHighlight) ? storedCustomization.timezoneMenuHighlight : defaults.timezoneMenuHighlight;
-    const clockLabelColor = isHexColor(storedCustomization?.clockLabelColor) ? storedCustomization.clockLabelColor : defaults.clockLabelColor;
-    const clockTimeColor = isHexColor(storedCustomization?.clockTimeColor) ? storedCustomization.clockTimeColor : defaults.clockTimeColor;
+    const brandTextColor = isHexColor(storedCustomization?.brandTextColor) && storedCustomization.brandTextColor !== defaults.brandTextColor
+      ? storedCustomization.brandTextColor
+      : (isDarkTheme ? "#ffffff" : "#0f172a");
+    const brandIconColor = isHexColor(storedCustomization?.brandIconColor) && storedCustomization.brandIconColor !== defaults.brandIconColor
+      ? storedCustomization.brandIconColor
+      : (isDarkTheme ? "#ffffff" : "#0f172a");
+    const timezoneMenuBackground = isHexColor(storedCustomization?.timezoneMenuBackground) && storedCustomization.timezoneMenuBackground !== defaults.timezoneMenuBackground
+      ? withAlpha(storedCustomization.timezoneMenuBackground, isDarkTheme ? 0.92 : 0.96)
+      : (isDarkTheme ? "rgba(15, 23, 42, 0.88)" : "rgba(255, 255, 255, 0.92)");
+    const timezoneMenuText = isHexColor(storedCustomization?.timezoneMenuText) && storedCustomization.timezoneMenuText !== defaults.timezoneMenuText
+      ? storedCustomization.timezoneMenuText
+      : (isDarkTheme ? "#ffffff" : "#0f172a");
+    const timezoneMenuHighlight = isHexColor(storedCustomization?.timezoneMenuHighlight) && storedCustomization.timezoneMenuHighlight !== defaults.timezoneMenuHighlight
+      ? withAlpha(storedCustomization.timezoneMenuHighlight, isDarkTheme ? 0.4 : 0.72)
+      : "rgba(56, 189, 248, 0.24)";
+    const clockLabelColor = isHexColor(storedCustomization?.clockLabelColor) && storedCustomization.clockLabelColor !== defaults.clockLabelColor
+      ? storedCustomization.clockLabelColor
+      : (isDarkTheme ? "rgba(255, 255, 255, 0.6)" : "rgba(30, 64, 175, 0.95)");
+    const clockTimeColor = isHexColor(storedCustomization?.clockTimeColor) && storedCustomization.clockTimeColor !== defaults.clockTimeColor
+      ? storedCustomization.clockTimeColor
+      : (isDarkTheme ? "#ffffff" : "#0f172a");
 
     document.documentElement.classList.toggle("theme-dark", isDarkTheme);
 
@@ -101,12 +115,12 @@
     document.documentElement.style.setProperty("--bg-solid", gradient.mid);
     document.documentElement.style.setProperty("--panel-bg", withAlpha(panelColor, isDarkTheme ? 0.34 : 0.82));
     document.documentElement.style.setProperty("--panel-border", isDarkTheme ? withAlpha(defaults.panelLight, 0.14) : withAlpha(defaults.panelDark, 0.15));
-    document.documentElement.style.setProperty("--timezone-menu-bg", withAlpha(timezoneMenuBackground, isDarkTheme ? 0.92 : 0.96));
+    document.documentElement.style.setProperty("--timezone-menu-bg", timezoneMenuBackground);
     document.documentElement.style.setProperty("--timezone-menu-text", timezoneMenuText);
-    document.documentElement.style.setProperty("--timezone-menu-highlight", withAlpha(timezoneMenuHighlight, isDarkTheme ? 0.4 : 0.72));
+    document.documentElement.style.setProperty("--timezone-menu-highlight", timezoneMenuHighlight);
     document.documentElement.style.setProperty("--brand-text", brandTextColor);
     document.documentElement.style.setProperty("--brand-icon", brandIconColor);
-    document.documentElement.style.setProperty("--date-color", isDarkTheme ? "#ffffff" : "#000000");
+    document.documentElement.style.setProperty("--date-color", isDarkTheme ? "#ffffff" : "#0f172a");
     document.documentElement.style.setProperty("--clock-label-color", clockLabelColor);
     document.documentElement.style.setProperty("--clock-time-color", clockTimeColor);
     document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(clockTimeColor, isDarkTheme ? 0.28 : 0.16)}`);

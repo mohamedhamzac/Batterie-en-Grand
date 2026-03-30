@@ -14,7 +14,7 @@ const DEFAULT_CUSTOMIZATION = Object.freeze({
   timezoneMenuBackground: "#ffffff", timezoneMenuText: "#0f172a", timezoneMenuHighlight: "#dbeafe",
   dateColor: "#2563eb", clockLabelColor: "#1d4ed8", clockTimeColor: "#0f172a",
   manualTime: "", brandTextColor: "#0f172a", brandIconColor: "#0f172a",
-  percentColor: "#0f172a", percentChargingColor: "#22c55e", brandText: "Batterie en Grand", brandIcon: "",
+  percentColor: "#0f172a", percentChargingColor: "#22c55e", percentLinkedToLevel: true, brandText: "Batterie en Grand", brandIcon: "",
   chargingActiveColor: "#22c55e", chargingIdleColor: "#9ca3af", chargingTextColor: "#ffffff", batteryShellColor: "#0f172a", chargingIcon: "⚡",
   levelHighColor: "#22c55e", levelMediumColor: "#facc15", levelWarningColor: "#fb923c", levelLowColor: "#dc2626", levelCriticalColor: "#7f1d1d", criticalThreshold: 15
 });
@@ -33,6 +33,7 @@ const undoButton = ids("undoButton");
 const redoButton = ids("redoButton");
 const resetPaletteButton = ids("resetPaletteButton");
 const resetManualTimeButton = ids("resetManualTimeButton");
+const percentLinkedToLevelInput = ids("percentLinkedToLevelInput");
 const timezoneToggle = ids("timezoneToggle");
 const timezoneDropdown = ids("timezoneDropdown");
 const timezoneSelectedLabel = ids("timezoneSelectedLabel");
@@ -152,6 +153,7 @@ function sanitizeCustomization(source) {
     brandIconColor: isHexColor(source.brandIconColor) ? source.brandIconColor : DEFAULT_CUSTOMIZATION.brandIconColor,
     percentColor: isHexColor(source.percentColor) ? source.percentColor : DEFAULT_CUSTOMIZATION.percentColor,
     percentChargingColor: isHexColor(source.percentChargingColor) ? source.percentChargingColor : DEFAULT_CUSTOMIZATION.percentChargingColor,
+    percentLinkedToLevel: Boolean(source.percentLinkedToLevel),
     brandText: sanitizeRequiredText(source.brandText, DEFAULT_CUSTOMIZATION.brandText),
     brandIcon: sanitizeOptionalText(source.brandIcon),
     chargingActiveColor: isHexColor(source.chargingActiveColor) ? source.chargingActiveColor : DEFAULT_CUSTOMIZATION.chargingActiveColor,
@@ -171,30 +173,45 @@ function getStoredCustomization() { try { return sanitizeCustomization(JSON.pars
 function saveCustomization(c) { try { localStorage.setItem(CUSTOMIZATION_STORAGE_KEY, JSON.stringify(c)); } catch {} }
 function pushUndoState(prev) { const snap = cloneCustomization(prev); if (!undoStack.length || !areCustomizationsEqual(undoStack.at(-1), snap)) undoStack.push(snap); if (undoStack.length > HISTORY_LIMIT) undoStack.shift(); redoStack = []; }
 function updateHistoryButtons() { undoButton.disabled = !undoStack.length; redoButton.disabled = !redoStack.length; }
-function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); }
-function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.timezoneMenuBackground = inputs.timezoneMenuBackgroundInput.value; raw.timezoneMenuText = inputs.timezoneMenuTextInput.value; raw.timezoneMenuHighlight = inputs.timezoneMenuHighlightInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
+function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); percentLinkedToLevelInput.checked = c.percentLinkedToLevel; }
+function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.timezoneMenuBackground = inputs.timezoneMenuBackgroundInput.value; raw.timezoneMenuText = inputs.timezoneMenuTextInput.value; raw.timezoneMenuHighlight = inputs.timezoneMenuHighlightInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.percentLinkedToLevel = percentLinkedToLevelInput.checked; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
 function fitTextToBounds(el, max, min) { if (!el) return; el.style.fontSize = `${max}px`; if (!el.textContent.trim()) return; let size = max; while (size > min && (el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight)) { size -= 1; el.style.fontSize = `${size}px`; } }
 function applyTextSizing() { fitTextToBounds(brandLogoGlyph, 34, 8); fitTextToBounds(bolt, 36, 9); }
 function buildGradient(theme, c) { return theme === "dark" ? { start: rgbToHex(mixColors(c.backgroundDark, "#0f172a", 0.24)), mid: c.backgroundDark, end: rgbToHex(mixColors(c.backgroundDark, "#000000", 0.7)) } : { start: rgbToHex(mixColors(c.backgroundLight, "#ffffff", 0.42)), mid: c.backgroundLight, end: rgbToHex(mixColors(c.backgroundLight, "#93c5fd", 0.38)) }; }
+function resolveDefaultThemeColor(customValue, defaultValue, lightValue, darkValue, dark) {
+  return customValue === defaultValue ? (dark ? darkValue : lightValue) : customValue;
+}
 function applyCustomization(customization, syncInputs = true) {
   const c = sanitizeCustomization(customization);
   const dark = document.documentElement.classList.contains("theme-dark");
   const gradient = buildGradient(dark ? "dark" : "light", c);
   const panelColor = dark ? c.panelDark : c.panelLight;
+  const brandTextColor = resolveDefaultThemeColor(c.brandTextColor, DEFAULT_CUSTOMIZATION.brandTextColor, "#0f172a", "#ffffff", dark);
+  const brandIconColor = resolveDefaultThemeColor(c.brandIconColor, DEFAULT_CUSTOMIZATION.brandIconColor, "#0f172a", "#ffffff", dark);
+  const dateColor = resolveDefaultThemeColor(c.dateColor, DEFAULT_CUSTOMIZATION.dateColor, "#0f172a", "#ffffff", dark);
+  const clockLabelColor = resolveDefaultThemeColor(c.clockLabelColor, DEFAULT_CUSTOMIZATION.clockLabelColor, "rgba(30, 64, 175, 0.95)", "rgba(255, 255, 255, 0.6)", dark);
+  const clockTimeColor = resolveDefaultThemeColor(c.clockTimeColor, DEFAULT_CUSTOMIZATION.clockTimeColor, "#0f172a", "#ffffff", dark);
+  const timezoneMenuBackground = c.timezoneMenuBackground === DEFAULT_CUSTOMIZATION.timezoneMenuBackground
+    ? (dark ? "rgba(15, 23, 42, 0.88)" : "rgba(255, 255, 255, 0.92)")
+    : withAlpha(c.timezoneMenuBackground, dark ? 0.92 : 0.96);
+  const timezoneMenuText = resolveDefaultThemeColor(c.timezoneMenuText, DEFAULT_CUSTOMIZATION.timezoneMenuText, "#0f172a", "#ffffff", dark);
+  const timezoneMenuHighlight = c.timezoneMenuHighlight === DEFAULT_CUSTOMIZATION.timezoneMenuHighlight
+    ? (dark ? "rgba(56, 189, 248, 0.24)" : "rgba(56, 189, 248, 0.24)")
+    : withAlpha(c.timezoneMenuHighlight, dark ? 0.4 : 0.72);
   activeCustomization = c;
   setRootVariable("--bg-main", `radial-gradient(circle at top, ${gradient.start}, ${gradient.mid} 52%, ${gradient.end} 100%)`);
   setRootVariable("--bg-solid", gradient.mid);
   setRootVariable("--panel-bg", withAlpha(panelColor, dark ? 0.34 : 0.82));
   setRootVariable("--panel-border", dark ? withAlpha(c.panelLight, 0.14) : withAlpha(c.panelDark, 0.15));
   setRootVariable("--panel-shadow", dark ? `0 12px 30px ${withAlpha("#000000", 0.28)}` : `0 12px 30px ${withAlpha(c.backgroundDark, 0.18)}`);
-  setRootVariable("--timezone-menu-bg", withAlpha(c.timezoneMenuBackground, dark ? 0.92 : 0.96));
-  setRootVariable("--timezone-menu-text", c.timezoneMenuText);
-  setRootVariable("--timezone-menu-highlight", withAlpha(c.timezoneMenuHighlight, dark ? 0.4 : 0.72));
-  setRootVariable("--brand-text", c.brandTextColor);
-  setRootVariable("--brand-icon", c.brandIconColor);
-  setRootVariable("--date-color", dark ? "#ffffff" : "#000000");
-  setRootVariable("--clock-label-color", c.clockLabelColor);
-  setRootVariable("--clock-time-color", c.clockTimeColor);
+  setRootVariable("--timezone-menu-bg", timezoneMenuBackground);
+  setRootVariable("--timezone-menu-text", timezoneMenuText);
+  setRootVariable("--timezone-menu-highlight", timezoneMenuHighlight);
+  setRootVariable("--brand-text", brandTextColor);
+  setRootVariable("--brand-icon", brandIconColor);
+  setRootVariable("--date-color", dateColor);
+  setRootVariable("--clock-label-color", clockLabelColor);
+  setRootVariable("--clock-time-color", clockTimeColor);
   setRootVariable("--percent-color", c.percentColor);
   setRootVariable("--percent-charging-color", c.percentChargingColor);
   setRootVariable("--charging-active", c.chargingActiveColor);
@@ -204,7 +221,7 @@ function applyCustomization(customization, syncInputs = true) {
   setRootVariable("--battery-critical", c.levelCriticalColor);
   setRootVariable("--battery-critical-glow", withAlpha(c.levelCriticalColor, 0.9));
   setRootVariable("--brand-shadow", `drop-shadow(0 0 16px ${withAlpha(c.chargingActiveColor, dark ? 0.2 : 0.34)})`);
-  setRootVariable("--clock-glow", `0 0 16px ${withAlpha(c.clockTimeColor, dark ? 0.24 : 0.16)}`);
+  setRootVariable("--clock-glow", `0 0 16px ${withAlpha(clockTimeColor, dark ? 0.24 : 0.16)}`);
   brandLogoText.textContent = c.brandText;
   brandLogoGlyph.textContent = c.brandIcon;
   brandMark.classList.toggle("has-custom-icon", c.brandIcon !== "");
@@ -309,12 +326,12 @@ function updateBatteryDisplay(snapshot) {
   if (snapshot.charging) {
     leftFill.style.background = activeCustomization.chargingActiveColor;
     bolt.style.display = "flex";
-    percent.style.color = activeCustomization.percentChargingColor;
+    percent.style.color = activeCustomization.percentLinkedToLevel ? batteryColor : activeCustomization.percentChargingColor;
     percent.classList.remove("low-battery-alert");
   } else {
     leftFill.style.background = activeCustomization.chargingIdleColor;
     bolt.style.display = activeCustomization.chargingIcon ? "flex" : "none";
-    percent.style.color = activeCustomization.percentColor;
+    percent.style.color = activeCustomization.percentLinkedToLevel ? batteryColor : activeCustomization.percentColor;
     percent.classList.toggle("low-battery-alert", level < activeCustomization.criticalThreshold);
   }
   bolt.style.color = activeCustomization.chargingTextColor;

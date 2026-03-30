@@ -21,14 +21,13 @@
 
   <div class="display-stage">
     <p id="clockDate" class="clock-date">--</p>
+    <section class="clock-panel">
+      <p id="clockLabel" class="clock-label">Heure actuelle</p>
+      <div id="clockTime" class="clock-time">--:--:--</div>
+    </section>
 
     <div class="container">
       <div class="battery-panel">
-        <section class="clock-panel">
-        <p id="clockLabel" class="clock-label">Heure actuelle</p>
-        <div id="clockTime" class="clock-time">--:--:--</div>
-        </section>
-
         <!-- Batterie gauche (charge) -->
         <div class="battery-left">
           <div id="leftFill" class="fill-left"></div>
@@ -199,6 +198,10 @@
       <label class="palette-field">
         <span>Pourcentage charge</span>
         <input id="percentChargingColorInput" type="color" value="#22c55e" aria-label="Choisir la couleur du pourcentage en charge">
+      </label>
+      <label class="palette-field palette-field-toggle">
+        <span>Lier au niveau</span>
+        <input id="percentLinkedToLevelInput" type="checkbox" aria-label="Lier la couleur du pourcentage au niveau de batterie">
       </label>
     </div>
 
