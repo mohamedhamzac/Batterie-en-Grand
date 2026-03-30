@@ -171,7 +171,8 @@ body.fullscreen-idle {
   justify-content: center;
   gap: 50px;
   flex-wrap: wrap;
-  width: min(100%, 1120px);
+  width: fit-content;
+  max-width: min(100%, 980px);
   padding: 44px 56px 36px;
   border: 1px solid var(--panel-border);
   border-radius: 32px;
