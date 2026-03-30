@@ -758,6 +758,10 @@ html.theme-dark .theme-switch-thumb {
   font-weight: 600;
 }
 
+.palette-field.is-disabled {
+  opacity: 0.48;
+}
+
 .palette-field-text,
 .palette-field-number {
   align-items: center;

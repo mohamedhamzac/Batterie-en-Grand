@@ -122,7 +122,7 @@ function setCursorVisible() { document.body.classList.remove("fullscreen-idle");
 function clearCursorHideTimer() { if (cursorHideTimerId) { clearTimeout(cursorHideTimerId); cursorHideTimerId = null; } }
 function scheduleCursorHide() { clearCursorHideTimer(); if (!getActiveFullscreenElement()) return setCursorVisible(); cursorHideTimerId = setTimeout(() => { if (getActiveFullscreenElement()) document.body.classList.add("fullscreen-idle"); }, CURSOR_HIDE_DELAY_MS); }
 function refreshCursorVisibility() { setCursorVisible(); scheduleCursorHide(); }
-function isFullscreenControlTarget(target) { return target.closest(".timezone-combobox, .palette-panel, .palette-button, .theme-controls, .hint-button"); }
+function isFullscreenControlTarget(target) { return target.closest(".timezone-combobox, .palette-panel, .palette-button, .theme-option"); }
 function handleGlobalSurfaceClick(event) {
   if (isFullscreenControlTarget(event.target)) return;
 
@@ -149,9 +149,141 @@ function parseManualTime(v) { const m = (v || "").match(/^(\d{2}):(\d{2})(?::(\d
 function formatHms(parts) { const p = n => String(n).padStart(2, "0"); return `${p(parts.hour)}:${p(parts.minute)}:${p(parts.second)}`; }
 function sanitizeManualTime(v) { const parts = parseManualTime(v); return parts ? formatHms(parts) : ""; }
 function getOffsetLabel(zone) { if (zone === WORLD_TIME_ZONE) return "UTC+0"; const parts = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "shortOffset" }).formatToParts(getCurrentReferenceDate()); return (parts.find(p => p.type === "timeZoneName")?.value || "GMT+0").replace("GMT", "UTC"); }
-function prettifyZone(zone) { return zone === WORLD_TIME_ZONE ? "Heure mondiale (UTC)" : zone.split("/").pop().replaceAll("_", " "); }
-function getAllTimezones() { const zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : ["Europe/Paris", "Europe/London", "America/New_York", "Asia/Tokyo"]; return [{ name: "Heure mondiale (UTC)", zone: WORLD_TIME_ZONE }, ...zones.map(zone => ({ name: prettifyZone(zone), zone }))]; }
-const timezones = getAllTimezones();
+const timezones = [
+  { name: "Heure mondiale (UTC)", zone: WORLD_TIME_ZONE },
+  { name: "Afghanistan", zone: "Asia/Kabul" },
+  { name: "Afrique du Sud", zone: "Africa/Johannesburg" },
+  { name: "Albanie", zone: "Europe/Tirane" },
+  { name: "Algerie", zone: "Africa/Algiers" },
+  { name: "Allemagne", zone: "Europe/Berlin" },
+  { name: "Andorre", zone: "Europe/Andorra" },
+  { name: "Angola", zone: "Africa/Luanda" },
+  { name: "Arabie saoudite", zone: "Asia/Riyadh" },
+  { name: "Argentine", zone: "America/Argentina/Buenos_Aires" },
+  { name: "Armenie", zone: "Asia/Yerevan" },
+  { name: "Australie", zone: "Australia/Sydney" },
+  { name: "Autriche", zone: "Europe/Vienna" },
+  { name: "Azerbaidjan", zone: "Asia/Baku" },
+  { name: "Bahrein", zone: "Asia/Bahrain" },
+  { name: "Bangladesh", zone: "Asia/Dhaka" },
+  { name: "Belgique", zone: "Europe/Brussels" },
+  { name: "Benin", zone: "Africa/Porto-Novo" },
+  { name: "Bielorussie", zone: "Europe/Minsk" },
+  { name: "Bolivie", zone: "America/La_Paz" },
+  { name: "Bosnie-Herzegovine", zone: "Europe/Sarajevo" },
+  { name: "Botswana", zone: "Africa/Gaborone" },
+  { name: "Bresil", zone: "America/Sao_Paulo" },
+  { name: "Bulgarie", zone: "Europe/Sofia" },
+  { name: "Burkina Faso", zone: "Africa/Ouagadougou" },
+  { name: "Cambodge", zone: "Asia/Phnom_Penh" },
+  { name: "Cameroun", zone: "Africa/Douala" },
+  { name: "Canada", zone: "America/Toronto" },
+  { name: "Chili", zone: "America/Santiago" },
+  { name: "Chine", zone: "Asia/Shanghai" },
+  { name: "Chypre", zone: "Asia/Nicosia" },
+  { name: "Colombie", zone: "America/Bogota" },
+  { name: "Coree du Nord", zone: "Asia/Pyongyang" },
+  { name: "Coree du Sud", zone: "Asia/Seoul" },
+  { name: "Costa Rica", zone: "America/Costa_Rica" },
+  { name: "Cote d'Ivoire", zone: "Africa/Abidjan" },
+  { name: "Croatie", zone: "Europe/Zagreb" },
+  { name: "Cuba", zone: "America/Havana" },
+  { name: "Danemark", zone: "Europe/Copenhagen" },
+  { name: "Egypte", zone: "Africa/Cairo" },
+  { name: "Emirats arabes unis", zone: "Asia/Dubai" },
+  { name: "Equateur", zone: "America/Guayaquil" },
+  { name: "Espagne", zone: "Europe/Madrid" },
+  { name: "Estonie", zone: "Europe/Tallinn" },
+  { name: "Etats-Unis", zone: "America/New_York" },
+  { name: "Ethiopie", zone: "Africa/Addis_Ababa" },
+  { name: "Finlande", zone: "Europe/Helsinki" },
+  { name: "France", zone: "Europe/Paris" },
+  { name: "Gabon", zone: "Africa/Libreville" },
+  { name: "Georgie", zone: "Asia/Tbilisi" },
+  { name: "Ghana", zone: "Africa/Accra" },
+  { name: "Grece", zone: "Europe/Athens" },
+  { name: "Guatemala", zone: "America/Guatemala" },
+  { name: "Guinee", zone: "Africa/Conakry" },
+  { name: "Haiti", zone: "America/Port-au-Prince" },
+  { name: "Honduras", zone: "America/Tegucigalpa" },
+  { name: "Hongrie", zone: "Europe/Budapest" },
+  { name: "Inde", zone: "Asia/Kolkata" },
+  { name: "Indonesie", zone: "Asia/Jakarta" },
+  { name: "Irak", zone: "Asia/Baghdad" },
+  { name: "Iran", zone: "Asia/Tehran" },
+  { name: "Irlande", zone: "Europe/Dublin" },
+  { name: "Islande", zone: "Atlantic/Reykjavik" },
+  { name: "Israel", zone: "Asia/Jerusalem" },
+  { name: "Italie", zone: "Europe/Rome" },
+  { name: "Jamaique", zone: "America/Jamaica" },
+  { name: "Japon", zone: "Asia/Tokyo" },
+  { name: "Jordanie", zone: "Asia/Amman" },
+  { name: "Kazakhstan", zone: "Asia/Almaty" },
+  { name: "Kenya", zone: "Africa/Nairobi" },
+  { name: "Koweit", zone: "Asia/Kuwait" },
+  { name: "Laos", zone: "Asia/Vientiane" },
+  { name: "Lettonie", zone: "Europe/Riga" },
+  { name: "Liban", zone: "Asia/Beirut" },
+  { name: "Libye", zone: "Africa/Tripoli" },
+  { name: "Lituanie", zone: "Europe/Vilnius" },
+  { name: "Luxembourg", zone: "Europe/Luxembourg" },
+  { name: "Madagascar", zone: "Indian/Antananarivo" },
+  { name: "Malaisie", zone: "Asia/Kuala_Lumpur" },
+  { name: "Mali", zone: "Africa/Bamako" },
+  { name: "Maroc", zone: "Africa/Casablanca" },
+  { name: "Mexique", zone: "America/Mexico_City" },
+  { name: "Monaco", zone: "Europe/Monaco" },
+  { name: "Mongolie", zone: "Asia/Ulaanbaatar" },
+  { name: "Mozambique", zone: "Africa/Maputo" },
+  { name: "Namibie", zone: "Africa/Windhoek" },
+  { name: "Nepal", zone: "Asia/Kathmandu" },
+  { name: "Niger", zone: "Africa/Niamey" },
+  { name: "Nigeria", zone: "Africa/Lagos" },
+  { name: "Norvege", zone: "Europe/Oslo" },
+  { name: "Nouvelle-Zelande", zone: "Pacific/Auckland" },
+  { name: "Oman", zone: "Asia/Muscat" },
+  { name: "Ouganda", zone: "Africa/Kampala" },
+  { name: "Pakistan", zone: "Asia/Karachi" },
+  { name: "Panama", zone: "America/Panama" },
+  { name: "Paraguay", zone: "America/Asuncion" },
+  { name: "Pays-Bas", zone: "Europe/Amsterdam" },
+  { name: "Perou", zone: "America/Lima" },
+  { name: "Philippines", zone: "Asia/Manila" },
+  { name: "Pologne", zone: "Europe/Warsaw" },
+  { name: "Portugal", zone: "Europe/Lisbon" },
+  { name: "Qatar", zone: "Asia/Qatar" },
+  { name: "Republique tcheque", zone: "Europe/Prague" },
+  { name: "Republique dominicaine", zone: "America/Santo_Domingo" },
+  { name: "Roumanie", zone: "Europe/Bucharest" },
+  { name: "Royaume-Uni", zone: "Europe/London" },
+  { name: "Russie", zone: "Europe/Moscow" },
+  { name: "Rwanda", zone: "Africa/Kigali" },
+  { name: "Senegal", zone: "Africa/Dakar" },
+  { name: "Serbie", zone: "Europe/Belgrade" },
+  { name: "Singapour", zone: "Asia/Singapore" },
+  { name: "Slovaquie", zone: "Europe/Bratislava" },
+  { name: "Slovenie", zone: "Europe/Ljubljana" },
+  { name: "Somalie", zone: "Africa/Mogadishu" },
+  { name: "Soudan", zone: "Africa/Khartoum" },
+  { name: "Sri Lanka", zone: "Asia/Colombo" },
+  { name: "Suede", zone: "Europe/Stockholm" },
+  { name: "Suisse", zone: "Europe/Zurich" },
+  { name: "Syrie", zone: "Asia/Damascus" },
+  { name: "Taiwan", zone: "Asia/Taipei" },
+  { name: "Tanzanie", zone: "Africa/Dar_es_Salaam" },
+  { name: "Tchad", zone: "Africa/Ndjamena" },
+  { name: "Thailande", zone: "Asia/Bangkok" },
+  { name: "Tunisie", zone: "Africa/Tunis" },
+  { name: "Turquie", zone: "Europe/Istanbul" },
+  { name: "Ukraine", zone: "Europe/Kyiv" },
+  { name: "Uruguay", zone: "America/Montevideo" },
+  { name: "Venezuela", zone: "America/Caracas" },
+  { name: "Vietnam", zone: "Asia/Ho_Chi_Minh" },
+  { name: "Yemen", zone: "Asia/Aden" },
+  { name: "Zambie", zone: "Africa/Lusaka" },
+  { name: "Zimbabwe", zone: "Africa/Harare" }
+];
+function getZoneDisplayName(zone) { return timezones.find(item => item.zone === zone)?.name || "Heure mondiale (UTC)"; }
 let activeZone = timezones.some(z => z.zone === getStoredTimezone()) ? getStoredTimezone() : WORLD_TIME_ZONE;
 let activeCustomization = getStoredCustomization();
 function sanitizeCustomization(source) {
@@ -192,7 +324,14 @@ function getStoredCustomization() { try { return sanitizeCustomization(JSON.pars
 function saveCustomization(c) { try { localStorage.setItem(CUSTOMIZATION_STORAGE_KEY, JSON.stringify(c)); } catch {} }
 function pushUndoState(prev) { const snap = cloneCustomization(prev); if (!undoStack.length || !areCustomizationsEqual(undoStack.at(-1), snap)) undoStack.push(snap); if (undoStack.length > HISTORY_LIMIT) undoStack.shift(); redoStack = []; }
 function updateHistoryButtons() { undoButton.disabled = !undoStack.length; redoButton.disabled = !redoStack.length; }
-function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); percentLinkedToLevelInput.checked = c.percentLinkedToLevel; }
+function updatePercentColorInputState(linked) {
+  [inputs.percentColorInput, inputs.percentChargingColorInput].forEach(input => {
+    if (!input) return;
+    input.disabled = linked;
+    input.closest(".palette-field")?.classList.toggle("is-disabled", linked);
+  });
+}
+function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); percentLinkedToLevelInput.checked = c.percentLinkedToLevel; updatePercentColorInputState(c.percentLinkedToLevel); }
 function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.timezoneMenuBackground = inputs.timezoneMenuBackgroundInput.value; raw.timezoneMenuText = inputs.timezoneMenuTextInput.value; raw.timezoneMenuHighlight = inputs.timezoneMenuHighlightInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.percentLinkedToLevel = percentLinkedToLevelInput.checked; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
 function fitTextToBounds(el, max, min) { if (!el) return; el.style.fontSize = `${max}px`; if (!el.textContent.trim()) return; let size = max; while (size > min && (el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight)) { size -= 1; el.style.fontSize = `${size}px`; } }
 function applyTextSizing() { fitTextToBounds(brandLogoGlyph, 34, 8); fitTextToBounds(bolt, 36, 9); }
@@ -270,13 +409,13 @@ function applyTheme(theme) { document.documentElement.classList.toggle("theme-da
 function getZoneDateParts(zone) { const parts = new Intl.DateTimeFormat("en-CA", { timeZone: zone === WORLD_TIME_ZONE ? "UTC" : zone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(getCurrentReferenceDate()); const val = t => parts.find(p => p.type === t)?.value || "00"; return { year: +val("year"), month: +val("month"), day: +val("day"), hour: +val("hour"), minute: +val("minute"), second: +val("second") }; }
 function getDisplayParts() { const p = getZoneDateParts(activeZone); const manual = parseManualTime(activeCustomization.manualTime); return manual ? { ...p, ...manual } : p; }
 function formatDateParts(parts) { const weekday = WEEKDAY_NAMES[new Date(Date.UTC(parts.year, parts.month - 1, parts.day)).getUTCDay()]; const label = `${weekday} ${parts.day} ${MONTH_NAMES[parts.month - 1]} ${parts.year}`; return label.charAt(0).toUpperCase() + label.slice(1); }
-function updateClock() { const parts = getDisplayParts(); clockDate.textContent = formatDateParts(parts); clockTime.textContent = formatHms(parts); clockLabel.textContent = activeZone === WORLD_TIME_ZONE ? "HEURE MONDIALE - UTC" : `HEURE ACTUELLE - ${prettifyZone(activeZone).toUpperCase()}`; }
+function updateClock() { const parts = getDisplayParts(); clockDate.textContent = formatDateParts(parts); clockTime.textContent = formatHms(parts); clockLabel.textContent = activeZone === WORLD_TIME_ZONE ? "HEURE MONDIALE - UTC" : `HEURE ACTUELLE - ${getZoneDisplayName(activeZone).toUpperCase()}`; }
 async function syncTimeFromWorldService() { if (syncRequest) return syncRequest; syncRequest = fetch(WORLD_TIME_API_URL, { cache: "no-store", credentials: "omit", mode: "cors", redirect: "error", referrerPolicy: "no-referrer" }).then(r => r.ok ? r.json() : Promise.reject()).then(data => { const ms = Date.parse(data.utc_datetime || data.datetime); if (!Number.isNaN(ms)) { syncedUtcMs = ms; syncedAtPerfMs = performance.now(); renderTimezoneOptions(); updateClock(); } }).catch(() => { if (syncedUtcMs === null) updateClock(); }).finally(() => { syncRequest = null; }); return syncRequest; }
 function syncClock() { updateClock(); clearTimeout(clockTimerId); clockTimerId = setTimeout(syncClock, 1000 - (Date.now() % 1000)); }
 function getFilteredTimezones() { const q = timezoneSearchQuery.trim().toLowerCase(); return timezones.filter(({ name, zone }) => !q || `${name} ${zone} ${getOffsetLabel(zone)}`.toLowerCase().includes(q)); }
 function renderTimezoneOptions() {
   filteredTimezones = getFilteredTimezones();
-  timezoneSelectedLabel.textContent = `${prettifyZone(activeZone)} - ${getOffsetLabel(activeZone)}`;
+  timezoneSelectedLabel.textContent = `${getZoneDisplayName(activeZone)} - ${getOffsetLabel(activeZone)}`;
   timezoneResults.innerHTML = "";
 
   if (!filteredTimezones.length) {
@@ -360,7 +499,7 @@ function updateBatteryDisplay(snapshot) {
   updateCriticalAlertState(snapshot, level);
 }
 
-[timezoneToggle, timezoneDropdown, timezoneSearchInput, timezoneResults, controlsPanel, themeSwitch, paletteButton, palettePanel, fullscreenHint].forEach(el => {
+[timezoneToggle, timezoneDropdown, timezoneSearchInput, timezoneResults, paletteButton, palettePanel, themeLightButton, themeDarkButton].forEach(el => {
   ["pointerdown", "mousedown", "click", "touchstart"].forEach(name => el?.addEventListener(name, event => event.stopPropagation()));
 });
 timezoneSearchInput.addEventListener("input", event => { timezoneSearchQuery = event.target.value; renderTimezoneOptions(); });
@@ -379,6 +518,7 @@ themeDarkButton.addEventListener("click", () => { applyTheme("dark"); saveTheme(
 paletteButton.addEventListener("click", () => setPalettePanelOpen(paletteButton.getAttribute("aria-expanded") !== "true"));
 fullscreenHint.addEventListener("click", toggleFullscreen);
 inputNames.forEach(name => inputs[name].addEventListener("input", () => commitCustomization(readCustomizationFromInputs())));
+percentLinkedToLevelInput.addEventListener("input", () => commitCustomization(readCustomizationFromInputs()));
 resetManualTimeButton.addEventListener("click", () => commitCustomization({ ...activeCustomization, manualTime: "" }));
 undoButton.addEventListener("click", undoCustomization);
 redoButton.addEventListener("click", redoCustomization);
