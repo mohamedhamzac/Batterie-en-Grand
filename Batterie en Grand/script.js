@@ -122,6 +122,25 @@ function setCursorVisible() { document.body.classList.remove("fullscreen-idle");
 function clearCursorHideTimer() { if (cursorHideTimerId) { clearTimeout(cursorHideTimerId); cursorHideTimerId = null; } }
 function scheduleCursorHide() { clearCursorHideTimer(); if (!getActiveFullscreenElement()) return setCursorVisible(); cursorHideTimerId = setTimeout(() => { if (getActiveFullscreenElement()) document.body.classList.add("fullscreen-idle"); }, CURSOR_HIDE_DELAY_MS); }
 function refreshCursorVisibility() { setCursorVisible(); scheduleCursorHide(); }
+function isFullscreenControlTarget(target) { return target.closest(".timezone-combobox, .palette-panel, .palette-button, .theme-controls, .hint-button"); }
+function handleGlobalSurfaceClick(event) {
+  if (isFullscreenControlTarget(event.target)) return;
+
+  const paletteWasOpen = palettePanel.classList.contains("is-open");
+  const timezoneWasOpen = timezoneDropdown.classList.contains("is-open");
+
+  if (paletteWasOpen) {
+    setPalettePanelOpen(false);
+    return;
+  }
+
+  if (timezoneWasOpen) {
+    setTimezoneDropdownOpen(false);
+    return;
+  }
+
+  if (!getActiveFullscreenElement()) toggleFullscreen();
+}
 function detectDeviceType() { const ua = navigator.userAgent || ""; const coarse = window.matchMedia("(pointer: coarse)").matches; const short = Math.min(window.innerWidth, window.innerHeight); const long = Math.max(window.innerWidth, window.innerHeight); if (/iPad|Tablet|PlayBook|Silk/i.test(ua) || (coarse && short >= 700 && long >= 900)) return "tablet"; if (/Android|iPhone|iPod|IEMobile|Opera Mini|Windows Phone/i.test(ua) || (coarse && short < 700)) return "mobile"; return "desktop"; }
 function applyDeviceLayout() { const t = detectDeviceType(); document.body.dataset.device = t; document.body.classList.toggle("device-mobile", t === "mobile"); document.body.classList.toggle("device-tablet", t === "tablet"); document.body.classList.toggle("device-desktop", t === "desktop"); }
 function setBatteryAvailability(hasBattery) { document.body.classList.toggle("no-battery", !hasBattery); }
@@ -364,11 +383,7 @@ resetManualTimeButton.addEventListener("click", () => commitCustomization({ ...a
 undoButton.addEventListener("click", undoCustomization);
 redoButton.addEventListener("click", redoCustomization);
 resetPaletteButton.addEventListener("click", resetCustomization);
-document.body.addEventListener("click", event => {
-  if (event.target.closest(".timezone-combobox, .palette-panel, .palette-button, .theme-controls, .hint-button")) return;
-  setPalettePanelOpen(false);
-  setTimezoneDropdownOpen(false);
-});
+document.body.addEventListener("click", handleGlobalSurfaceClick);
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") { setPalettePanelOpen(false); setTimezoneDropdownOpen(false); }
   if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "z") { event.preventDefault(); undoCustomization(); }
