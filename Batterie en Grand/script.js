@@ -33,33 +33,6 @@ function saveTheme(theme) {
   }
 }
 
-function getStoredPalette() {
-  try {
-    const storedPalette = JSON.parse(localStorage.getItem(PALETTE_STORAGE_KEY) || "null");
-
-    if (
-      storedPalette &&
-      isHexColor(storedPalette.background) &&
-      isHexColor(storedPalette.accent) &&
-      isHexColor(storedPalette.logo)
-    ) {
-      return storedPalette;
-    }
-  } catch {
-    // Ignore malformed palette values.
-  }
-
-  return null;
-}
-
-function savePalette(palette) {
-  try {
-    localStorage.setItem(PALETTE_STORAGE_KEY, JSON.stringify(palette));
-  } catch {
-    // Ignore localStorage failures and keep the current palette for the session.
-  }
-}
-
 function getStoredTimezone() {
   try {
     const storedTimezone = localStorage.getItem(TIMEZONE_STORAGE_KEY);
@@ -83,24 +56,6 @@ function getSystemTheme() {
 
 function getPreferredTheme() {
   return getStoredTheme() || getSystemTheme();
-}
-
-function applyTheme(theme) {
-  const isDarkTheme = theme === "dark";
-
-  document.documentElement.classList.toggle("theme-dark", isDarkTheme);
-  applyPalette(activePalette);
-
-  if (themeLightButton && themeDarkButton) {
-    themeLightButton.setAttribute("aria-pressed", String(!isDarkTheme));
-    themeDarkButton.setAttribute("aria-pressed", String(isDarkTheme));
-  }
-}
-
-function toggleTheme() {
-  const nextTheme = document.documentElement.classList.contains("theme-dark") ? "light" : "dark";
-  applyTheme(nextTheme);
-  saveTheme(nextTheme);
 }
 
 function isHexColor(value) {
@@ -135,66 +90,6 @@ function rgbToHex({ r, g, b }) {
 function withAlpha(hexColor, alpha) {
   const { r, g, b } = hexToRgb(hexColor);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function buildGradientStops(baseColor, accentColor, isDarkTheme) {
-  if (isDarkTheme) {
-    return {
-      start: rgbToHex(mixColors(baseColor, "#0f172a", 0.7)),
-      mid: rgbToHex(mixColors(baseColor, "#020617", 0.74)),
-      end: rgbToHex(mixColors(accentColor, "#000000", 0.82))
-    };
-  }
-
-  return {
-    start: rgbToHex(mixColors(baseColor, "#ffffff", 0.62)),
-    mid: rgbToHex(mixColors(baseColor, "#dbeafe", 0.4)),
-    end: rgbToHex(mixColors(accentColor, "#bfdbfe", 0.38))
-  };
-}
-
-function applyPalette(palette) {
-  const resolvedPalette = {
-    background: palette?.background || DEFAULT_PALETTE.background,
-    accent: palette?.accent || DEFAULT_PALETTE.accent,
-    logo: palette?.logo || DEFAULT_PALETTE.logo
-  };
-  const isDarkTheme = document.documentElement.classList.contains("theme-dark");
-  const gradientStops = buildGradientStops(resolvedPalette.background, resolvedPalette.accent, isDarkTheme);
-
-  document.documentElement.classList.add("palette-custom");
-  document.documentElement.style.setProperty(
-    "--bg-main",
-    `radial-gradient(circle at top, ${gradientStops.start}, ${gradientStops.mid} 52%, ${gradientStops.end} 100%)`
-  );
-  document.documentElement.style.setProperty("--bg-solid", gradientStops.mid);
-  document.documentElement.style.setProperty("--accent-main", resolvedPalette.accent);
-  document.documentElement.style.setProperty("--accent-soft", withAlpha(resolvedPalette.accent, 0.24));
-  document.documentElement.style.setProperty("--brand-shadow", `drop-shadow(0 0 18px ${withAlpha(resolvedPalette.logo, 0.45)})`);
-  document.documentElement.style.setProperty("--hint-color", withAlpha(resolvedPalette.accent, isDarkTheme ? 0.62 : 0.95));
-  document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(resolvedPalette.accent, isDarkTheme ? 0.42 : 0.3)}`);
-
-  if (backgroundColorInput) {
-    backgroundColorInput.value = resolvedPalette.background;
-  }
-
-  if (accentColorInput) {
-    accentColorInput.value = resolvedPalette.accent;
-  }
-
-  if (logoColorInput) {
-    logoColorInput.value = resolvedPalette.logo;
-  }
-}
-
-function setPalettePanelOpen(isOpen) {
-  if (!paletteButton || !palettePanel) {
-    return;
-  }
-
-  paletteButton.setAttribute("aria-expanded", String(isOpen));
-  palettePanel.classList.toggle("is-open", isOpen);
-  palettePanel.setAttribute("aria-hidden", String(!isOpen));
 }
 
 function updateFullscreenHint() {
@@ -278,9 +173,28 @@ const themeLightButton = document.getElementById("themeLightButton");
 const themeDarkButton = document.getElementById("themeDarkButton");
 const paletteButton = document.getElementById("paletteButton");
 const palettePanel = document.getElementById("palettePanel");
-const backgroundColorInput = document.getElementById("backgroundColorInput");
-const accentColorInput = document.getElementById("accentColorInput");
-const logoColorInput = document.getElementById("logoColorInput");
+const undoButton = document.getElementById("undoButton");
+const redoButton = document.getElementById("redoButton");
+const resetPaletteButton = document.getElementById("resetPaletteButton");
+const backgroundLightInput = document.getElementById("backgroundLightInput");
+const backgroundDarkInput = document.getElementById("backgroundDarkInput");
+const textLightInput = document.getElementById("textLightInput");
+const textDarkInput = document.getElementById("textDarkInput");
+const brandTextInput = document.getElementById("brandTextInput");
+const brandIconInput = document.getElementById("brandIconInput");
+const chargingColorInput = document.getElementById("chargingColorInput");
+const chargingIconInput = document.getElementById("chargingIconInput");
+const levelHighColorInput = document.getElementById("levelHighColorInput");
+const levelMediumColorInput = document.getElementById("levelMediumColorInput");
+const levelWarningColorInput = document.getElementById("levelWarningColorInput");
+const levelLowColorInput = document.getElementById("levelLowColorInput");
+const levelCriticalColorInput = document.getElementById("levelCriticalColorInput");
+const criticalThresholdInput = document.getElementById("criticalThresholdInput");
+const levelLowColorLabel = document.getElementById("levelLowColorLabel");
+const levelCriticalColorLabel = document.getElementById("levelCriticalColorLabel");
+const brandMark = document.querySelector(".brand-mark");
+const brandLogoGlyph = document.getElementById("brandLogoGlyph");
+const brandLogoText = document.getElementById("brandLogoText");
 const timezoneSelect = document.getElementById("timezoneSelect");
 const controlsPanel = document.querySelector(".controls-panel");
 const rightBubbles = document.getElementById("rightBubbles");
@@ -290,40 +204,52 @@ const rightFill = document.getElementById("rightFill");
 const bolt = document.getElementById("bolt");
 const THEME_STORAGE_KEY = "batterie-en-grand-theme";
 const TIMEZONE_STORAGE_KEY = "batterie-en-grand-timezone";
-const PALETTE_STORAGE_KEY = "batterie-en-grand-palette";
+const CUSTOMIZATION_STORAGE_KEY = "batterie-en-grand-customization";
 const WORLD_TIME_ZONE = "UTC";
 const WORLD_TIME_API_ORIGIN = "https://worldtimeapi.org";
 const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
-const DEFAULT_PALETTE = {
-  background: "#dbeafe",
-  accent: "#38bdf8",
-  logo: "#22c55e"
-};
+const HISTORY_LIMIT = 100;
+const DEFAULT_CUSTOMIZATION = Object.freeze({
+  backgroundLight: "#dbeafe",
+  backgroundDark: "#020617",
+  textLight: "#0f172a",
+  textDark: "#ffffff",
+  brandText: "Batterie en Grand",
+  brandIcon: "",
+  chargingColor: "#22c55e",
+  chargingIcon: "⚡",
+  levelHighColor: "#22c55e",
+  levelMediumColor: "#facc15",
+  levelWarningColor: "#fb923c",
+  levelLowColor: "#dc2626",
+  levelCriticalColor: "#7f1d1d",
+  criticalThreshold: 15
+});
 
 const countries = [
   { name: "Heure mondiale (UTC)", zone: WORLD_TIME_ZONE },
   { name: "Afghanistan", zone: "Asia/Kabul" },
   { name: "Afrique du Sud", zone: "Africa/Johannesburg" },
   { name: "Albanie", zone: "Europe/Tirane" },
-  { name: "Algerie", zone: "Africa/Algiers" },
+  { name: "Algérie", zone: "Africa/Algiers" },
   { name: "Allemagne", zone: "Europe/Berlin" },
   { name: "Andorre", zone: "Europe/Andorra" },
   { name: "Angola", zone: "Africa/Luanda" },
   { name: "Arabie saoudite", zone: "Asia/Riyadh" },
   { name: "Argentine", zone: "America/Argentina/Buenos_Aires" },
-  { name: "Armenie", zone: "Asia/Yerevan" },
+  { name: "Arménie", zone: "Asia/Yerevan" },
   { name: "Australie", zone: "Australia/Sydney" },
   { name: "Autriche", zone: "Europe/Vienna" },
-  { name: "Azerbaidjan", zone: "Asia/Baku" },
-  { name: "Bahrein", zone: "Asia/Bahrain" },
+  { name: "Azerbaïdjan", zone: "Asia/Baku" },
+  { name: "Bahreïn", zone: "Asia/Bahrain" },
   { name: "Bangladesh", zone: "Asia/Dhaka" },
   { name: "Belgique", zone: "Europe/Brussels" },
-  { name: "Benin", zone: "Africa/Porto-Novo" },
-  { name: "Bielorussie", zone: "Europe/Minsk" },
+  { name: "Bénin", zone: "Africa/Porto-Novo" },
+  { name: "Biélorussie", zone: "Europe/Minsk" },
   { name: "Bolivie", zone: "America/La_Paz" },
-  { name: "Bosnie-Herzegovine", zone: "Europe/Sarajevo" },
+  { name: "Bosnie-Herzégovine", zone: "Europe/Sarajevo" },
   { name: "Botswana", zone: "Africa/Gaborone" },
-  { name: "Bresil", zone: "America/Sao_Paulo" },
+  { name: "Brésil", zone: "America/Sao_Paulo" },
   { name: "Bulgarie", zone: "Europe/Sofia" },
   { name: "Burkina Faso", zone: "Africa/Ouagadougou" },
   { name: "Cambodge", zone: "Asia/Phnom_Penh" },
@@ -333,45 +259,45 @@ const countries = [
   { name: "Chine", zone: "Asia/Shanghai" },
   { name: "Chypre", zone: "Asia/Nicosia" },
   { name: "Colombie", zone: "America/Bogota" },
-  { name: "Coree du Nord", zone: "Asia/Pyongyang" },
-  { name: "Coree du Sud", zone: "Asia/Seoul" },
+  { name: "Corée du Nord", zone: "Asia/Pyongyang" },
+  { name: "Corée du Sud", zone: "Asia/Seoul" },
   { name: "Costa Rica", zone: "America/Costa_Rica" },
-  { name: "Cote d'Ivoire", zone: "Africa/Abidjan" },
+  { name: "Côte d'Ivoire", zone: "Africa/Abidjan" },
   { name: "Croatie", zone: "Europe/Zagreb" },
   { name: "Cuba", zone: "America/Havana" },
   { name: "Danemark", zone: "Europe/Copenhagen" },
-  { name: "Egypte", zone: "Africa/Cairo" },
-  { name: "Emirats arabes unis", zone: "Asia/Dubai" },
-  { name: "Equateur", zone: "America/Guayaquil" },
+  { name: "Égypte", zone: "Africa/Cairo" },
+  { name: "Émirats arabes unis", zone: "Asia/Dubai" },
+  { name: "Équateur", zone: "America/Guayaquil" },
   { name: "Espagne", zone: "Europe/Madrid" },
   { name: "Estonie", zone: "Europe/Tallinn" },
-  { name: "Etats-Unis", zone: "America/New_York" },
-  { name: "Ethiopie", zone: "Africa/Addis_Ababa" },
+  { name: "États-Unis", zone: "America/New_York" },
+  { name: "Éthiopie", zone: "Africa/Addis_Ababa" },
   { name: "Finlande", zone: "Europe/Helsinki" },
   { name: "France", zone: "Europe/Paris" },
   { name: "Gabon", zone: "Africa/Libreville" },
-  { name: "Georgie", zone: "Asia/Tbilisi" },
+  { name: "Géorgie", zone: "Asia/Tbilisi" },
   { name: "Ghana", zone: "Africa/Accra" },
-  { name: "Grece", zone: "Europe/Athens" },
+  { name: "Grèce", zone: "Europe/Athens" },
   { name: "Guatemala", zone: "America/Guatemala" },
-  { name: "Guinee", zone: "Africa/Conakry" },
-  { name: "Haiti", zone: "America/Port-au-Prince" },
+  { name: "Guinée", zone: "Africa/Conakry" },
+  { name: "Haïti", zone: "America/Port-au-Prince" },
   { name: "Honduras", zone: "America/Tegucigalpa" },
   { name: "Hongrie", zone: "Europe/Budapest" },
   { name: "Inde", zone: "Asia/Kolkata" },
-  { name: "Indonesie", zone: "Asia/Jakarta" },
+  { name: "Indonésie", zone: "Asia/Jakarta" },
   { name: "Irak", zone: "Asia/Baghdad" },
   { name: "Iran", zone: "Asia/Tehran" },
   { name: "Irlande", zone: "Europe/Dublin" },
   { name: "Islande", zone: "Atlantic/Reykjavik" },
-  { name: "Israel", zone: "Asia/Jerusalem" },
+  { name: "Israël", zone: "Asia/Jerusalem" },
   { name: "Italie", zone: "Europe/Rome" },
   { name: "Jamaïque", zone: "America/Jamaica" },
   { name: "Japon", zone: "Asia/Tokyo" },
   { name: "Jordanie", zone: "Asia/Amman" },
   { name: "Kazakhstan", zone: "Asia/Almaty" },
   { name: "Kenya", zone: "Africa/Nairobi" },
-  { name: "Koweit", zone: "Asia/Kuwait" },
+  { name: "Koweït", zone: "Asia/Kuwait" },
   { name: "Laos", zone: "Asia/Vientiane" },
   { name: "Lettonie", zone: "Europe/Riga" },
   { name: "Liban", zone: "Asia/Beirut" },
@@ -390,40 +316,40 @@ const countries = [
   { name: "Nepal", zone: "Asia/Kathmandu" },
   { name: "Niger", zone: "Africa/Niamey" },
   { name: "Nigeria", zone: "Africa/Lagos" },
-  { name: "Norvege", zone: "Europe/Oslo" },
-  { name: "Nouvelle-Zelande", zone: "Pacific/Auckland" },
+  { name: "Norvège", zone: "Europe/Oslo" },
+  { name: "Nouvelle-Zélande", zone: "Pacific/Auckland" },
   { name: "Oman", zone: "Asia/Muscat" },
   { name: "Ouganda", zone: "Africa/Kampala" },
   { name: "Pakistan", zone: "Asia/Karachi" },
   { name: "Panama", zone: "America/Panama" },
   { name: "Paraguay", zone: "America/Asuncion" },
   { name: "Pays-Bas", zone: "Europe/Amsterdam" },
-  { name: "Perou", zone: "America/Lima" },
+  { name: "Pérou", zone: "America/Lima" },
   { name: "Philippines", zone: "Asia/Manila" },
   { name: "Pologne", zone: "Europe/Warsaw" },
   { name: "Portugal", zone: "Europe/Lisbon" },
   { name: "Qatar", zone: "Asia/Qatar" },
-  { name: "Republique tcheque", zone: "Europe/Prague" },
-  { name: "Republique dominicaine", zone: "America/Santo_Domingo" },
+  { name: "République tchèque", zone: "Europe/Prague" },
+  { name: "République dominicaine", zone: "America/Santo_Domingo" },
   { name: "Roumanie", zone: "Europe/Bucharest" },
   { name: "Royaume-Uni", zone: "Europe/London" },
   { name: "Russie", zone: "Europe/Moscow" },
   { name: "Rwanda", zone: "Africa/Kigali" },
-  { name: "Senegal", zone: "Africa/Dakar" },
+  { name: "Sénégal", zone: "Africa/Dakar" },
   { name: "Serbie", zone: "Europe/Belgrade" },
   { name: "Singapour", zone: "Asia/Singapore" },
   { name: "Slovaquie", zone: "Europe/Bratislava" },
-  { name: "Slovenie", zone: "Europe/Ljubljana" },
+  { name: "Slovénie", zone: "Europe/Ljubljana" },
   { name: "Somalie", zone: "Africa/Mogadishu" },
   { name: "Soudan", zone: "Africa/Khartoum" },
   { name: "Sri Lanka", zone: "Asia/Colombo" },
-  { name: "Suede", zone: "Europe/Stockholm" },
+  { name: "Suède", zone: "Europe/Stockholm" },
   { name: "Suisse", zone: "Europe/Zurich" },
   { name: "Syrie", zone: "Asia/Damascus" },
   { name: "Taiwan", zone: "Asia/Taipei" },
   { name: "Tanzanie", zone: "Africa/Dar_es_Salaam" },
   { name: "Tchad", zone: "Africa/Ndjamena" },
-  { name: "Thailande", zone: "Asia/Bangkok" },
+  { name: "Thaïlande", zone: "Asia/Bangkok" },
   { name: "Tunisie", zone: "Africa/Tunis" },
   { name: "Turquie", zone: "Europe/Istanbul" },
   { name: "Ukraine", zone: "Europe/Kyiv" },
@@ -436,18 +362,21 @@ const countries = [
 ];
 
 const storedTimezone = getStoredTimezone();
-const storedPalette = getStoredPalette();
+const storedCustomization = getStoredCustomization();
 let activeCountry = countries.find(country => country.zone === storedTimezone) ||
   countries.find(country => country.zone === WORLD_TIME_ZONE) ||
   countries[0];
 
 let activeZone = activeCountry.zone;
-let activePalette = storedPalette || DEFAULT_PALETTE;
+let activeCustomization = storedCustomization;
+let undoStack = [];
+let redoStack = [];
 let clockTimerId;
 let syncedUtcMs = null;
 let syncedAtPerfMs = 0;
 let syncRequest = null;
 let cursorHideTimerId = null;
+let batterySnapshot = null;
 const CURSOR_HIDE_DELAY_MS = 2500;
 
 function getClockLabel(countryName) {
@@ -581,12 +510,278 @@ function syncClock() {
   clockTimerId = setTimeout(syncClock, delayBeforeNextTick);
 }
 
+function getStoredCustomization() {
+  try {
+    return sanitizeCustomization(JSON.parse(localStorage.getItem(CUSTOMIZATION_STORAGE_KEY) || "null"));
+  } catch {
+    return cloneCustomization(DEFAULT_CUSTOMIZATION);
+  }
+}
+
+function saveCustomization(customization) {
+  try {
+    localStorage.setItem(CUSTOMIZATION_STORAGE_KEY, JSON.stringify(customization));
+  } catch {
+    // Ignore localStorage failures and keep the current customization for the session.
+  }
+}
+
+function cloneCustomization(customization) {
+  return JSON.parse(JSON.stringify(customization));
+}
+
+function areCustomizationsEqual(first, second) {
+  return JSON.stringify(first) === JSON.stringify(second);
+}
+
+function sanitizeOptionalText(value, maxLength = 4) {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function sanitizeRequiredText(value, fallback, maxLength = 40) {
+  const sanitizedValue = sanitizeOptionalText(value, maxLength);
+  return sanitizedValue || fallback;
+}
+
+function sanitizeCustomization(customization) {
+  const source = customization || {};
+
+  return {
+    backgroundLight: isHexColor(source.backgroundLight) ? source.backgroundLight : DEFAULT_CUSTOMIZATION.backgroundLight,
+    backgroundDark: isHexColor(source.backgroundDark) ? source.backgroundDark : DEFAULT_CUSTOMIZATION.backgroundDark,
+    textLight: isHexColor(source.textLight) ? source.textLight : DEFAULT_CUSTOMIZATION.textLight,
+    textDark: isHexColor(source.textDark) ? source.textDark : DEFAULT_CUSTOMIZATION.textDark,
+    brandText: sanitizeRequiredText(source.brandText, DEFAULT_CUSTOMIZATION.brandText, 40),
+    brandIcon: sanitizeOptionalText(source.brandIcon, 4),
+    chargingColor: isHexColor(source.chargingColor) ? source.chargingColor : DEFAULT_CUSTOMIZATION.chargingColor,
+    chargingIcon: sanitizeRequiredText(source.chargingIcon, DEFAULT_CUSTOMIZATION.chargingIcon, 4),
+    levelHighColor: isHexColor(source.levelHighColor) ? source.levelHighColor : DEFAULT_CUSTOMIZATION.levelHighColor,
+    levelMediumColor: isHexColor(source.levelMediumColor) ? source.levelMediumColor : DEFAULT_CUSTOMIZATION.levelMediumColor,
+    levelWarningColor: isHexColor(source.levelWarningColor) ? source.levelWarningColor : DEFAULT_CUSTOMIZATION.levelWarningColor,
+    levelLowColor: isHexColor(source.levelLowColor) ? source.levelLowColor : DEFAULT_CUSTOMIZATION.levelLowColor,
+    levelCriticalColor: isHexColor(source.levelCriticalColor) ? source.levelCriticalColor : DEFAULT_CUSTOMIZATION.levelCriticalColor,
+    criticalThreshold: clamp(Number.parseInt(source.criticalThreshold, 10) || DEFAULT_CUSTOMIZATION.criticalThreshold, 1, 99)
+  };
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function setRootVariable(name, value) {
+  document.documentElement.style.setProperty(name, value);
+}
+
+function buildGradient(theme, customization) {
+  if (theme === "dark") {
+    if (customization.backgroundDark === DEFAULT_CUSTOMIZATION.backgroundDark) {
+      return { start: "#020617", mid: "#020617", end: "#000000" };
+    }
+
+    return {
+      start: rgbToHex(mixColors(customization.backgroundDark, "#0f172a", 0.3)),
+      mid: customization.backgroundDark,
+      end: rgbToHex(mixColors(customization.backgroundDark, "#000000", 0.7))
+    };
+  }
+
+  if (customization.backgroundLight === DEFAULT_CUSTOMIZATION.backgroundLight) {
+    return { start: "#eff6ff", mid: "#dbeafe", end: "#bfdbfe" };
+  }
+
+  return {
+    start: rgbToHex(mixColors(customization.backgroundLight, "#ffffff", 0.46)),
+    mid: customization.backgroundLight,
+    end: rgbToHex(mixColors(customization.backgroundLight, "#93c5fd", 0.45))
+  };
+}
+
+function updateHistoryButtons() {
+  undoButton.disabled = undoStack.length === 0;
+  redoButton.disabled = redoStack.length === 0;
+}
+
+function updateThresholdLabels(customization) {
+  levelLowColorLabel.textContent = `${customization.criticalThreshold}% et +`;
+  levelCriticalColorLabel.textContent = `Moins de ${customization.criticalThreshold}%`;
+}
+
+function syncInputsWithCustomization(customization) {
+  backgroundLightInput.value = customization.backgroundLight;
+  backgroundDarkInput.value = customization.backgroundDark;
+  textLightInput.value = customization.textLight;
+  textDarkInput.value = customization.textDark;
+  brandTextInput.value = customization.brandText;
+  brandIconInput.value = customization.brandIcon;
+  chargingColorInput.value = customization.chargingColor;
+  chargingIconInput.value = customization.chargingIcon;
+  levelHighColorInput.value = customization.levelHighColor;
+  levelMediumColorInput.value = customization.levelMediumColor;
+  levelWarningColorInput.value = customization.levelWarningColor;
+  levelLowColorInput.value = customization.levelLowColor;
+  levelCriticalColorInput.value = customization.levelCriticalColor;
+  criticalThresholdInput.value = String(customization.criticalThreshold);
+}
+
+function readCustomizationFromInputs() {
+  return sanitizeCustomization({
+    backgroundLight: backgroundLightInput.value,
+    backgroundDark: backgroundDarkInput.value,
+    textLight: textLightInput.value,
+    textDark: textDarkInput.value,
+    brandText: brandTextInput.value,
+    brandIcon: brandIconInput.value,
+    chargingColor: chargingColorInput.value,
+    chargingIcon: chargingIconInput.value,
+    levelHighColor: levelHighColorInput.value,
+    levelMediumColor: levelMediumColorInput.value,
+    levelWarningColor: levelWarningColorInput.value,
+    levelLowColor: levelLowColorInput.value,
+    levelCriticalColor: levelCriticalColorInput.value,
+    criticalThreshold: criticalThresholdInput.value
+  });
+}
+
+function applyCustomization(customization, syncInputs = true) {
+  const resolvedCustomization = sanitizeCustomization(customization);
+  const currentTheme = document.documentElement.classList.contains("theme-dark") ? "dark" : "light";
+  const gradient = buildGradient(currentTheme, resolvedCustomization);
+  const mainTextColor = currentTheme === "dark" ? resolvedCustomization.textDark : resolvedCustomization.textLight;
+  const mutedTextColor = withAlpha(mainTextColor, currentTheme === "dark" ? 0.6 : 0.78);
+
+  activeCustomization = resolvedCustomization;
+
+  setRootVariable("--bg-main", `radial-gradient(circle at top, ${gradient.start}, ${gradient.mid} 52%, ${gradient.end} 100%)`);
+  setRootVariable("--bg-solid", gradient.mid);
+  setRootVariable("--text-main", mainTextColor);
+  setRootVariable("--brand-text", mainTextColor);
+  setRootVariable("--text-muted", mutedTextColor);
+  setRootVariable("--hint-color", mutedTextColor);
+  setRootVariable("--accent-main", mainTextColor);
+  setRootVariable("--accent-soft", withAlpha(mainTextColor, 0.16));
+  setRootVariable("--clock-glow", `0 0 16px ${withAlpha(mainTextColor, currentTheme === "dark" ? 0.28 : 0.16)}`);
+  setRootVariable("--brand-shadow", `drop-shadow(0 0 16px ${withAlpha(resolvedCustomization.chargingColor, currentTheme === "dark" ? 0.2 : 0.34)})`);
+  setRootVariable("--battery-critical", resolvedCustomization.levelCriticalColor);
+  setRootVariable("--battery-critical-glow", withAlpha(resolvedCustomization.levelCriticalColor, 0.9));
+
+  brandLogoText.textContent = resolvedCustomization.brandText;
+  brandLogoGlyph.textContent = resolvedCustomization.brandIcon;
+  brandMark.classList.toggle("has-custom-icon", resolvedCustomization.brandIcon !== "");
+  bolt.textContent = resolvedCustomization.chargingIcon;
+
+  updateThresholdLabels(resolvedCustomization);
+  updateHistoryButtons();
+
+  if (syncInputs) {
+    syncInputsWithCustomization(resolvedCustomization);
+  }
+
+  if (batterySnapshot) {
+    updateBatteryDisplay(batterySnapshot);
+  }
+}
+
+function applyTheme(theme) {
+  const isDarkTheme = theme === "dark";
+
+  document.documentElement.classList.toggle("theme-dark", isDarkTheme);
+  themeLightButton.setAttribute("aria-pressed", String(!isDarkTheme));
+  themeDarkButton.setAttribute("aria-pressed", String(isDarkTheme));
+  applyCustomization(activeCustomization);
+}
+
+function pushUndoState(previousCustomization) {
+  const snapshot = cloneCustomization(previousCustomization);
+
+  if (undoStack.length > 0 && areCustomizationsEqual(undoStack[undoStack.length - 1], snapshot)) {
+    return;
+  }
+
+  undoStack.push(snapshot);
+  if (undoStack.length > HISTORY_LIMIT) {
+    undoStack.shift();
+  }
+  redoStack = [];
+}
+
+function commitCustomization(nextCustomization, shouldRecordHistory = true) {
+  const resolvedCustomization = sanitizeCustomization(nextCustomization);
+
+  if (shouldRecordHistory && !areCustomizationsEqual(activeCustomization, resolvedCustomization)) {
+    pushUndoState(activeCustomization);
+  }
+
+  applyCustomization(resolvedCustomization);
+  saveCustomization(resolvedCustomization);
+}
+
+function undoCustomization() {
+  if (undoStack.length === 0) {
+    return;
+  }
+
+  redoStack.push(cloneCustomization(activeCustomization));
+  const previousCustomization = undoStack.pop();
+  applyCustomization(previousCustomization);
+  saveCustomization(previousCustomization);
+}
+
+function redoCustomization() {
+  if (redoStack.length === 0) {
+    return;
+  }
+
+  undoStack.push(cloneCustomization(activeCustomization));
+  const nextCustomization = redoStack.pop();
+  applyCustomization(nextCustomization);
+  saveCustomization(nextCustomization);
+}
+
+function resetCustomization() {
+  if (areCustomizationsEqual(activeCustomization, DEFAULT_CUSTOMIZATION)) {
+    return;
+  }
+
+  pushUndoState(activeCustomization);
+  applyCustomization(DEFAULT_CUSTOMIZATION);
+  saveCustomization(DEFAULT_CUSTOMIZATION);
+}
+
+function setPalettePanelOpen(isOpen) {
+  paletteButton.setAttribute("aria-expanded", String(isOpen));
+  palettePanel.classList.toggle("is-open", isOpen);
+  palettePanel.setAttribute("aria-hidden", String(!isOpen));
+}
+
 function getBatteryColor(level) {
-  if (level >= 80) return "#22c55e";
-  if (level >= 50) return "#facc15";
-  if (level > 35) return "#fb923c";
-  if (level >= 15) return "#dc2626";
-  return "#7f1d1d";
+  if (level >= 80) return activeCustomization.levelHighColor;
+  if (level >= 50) return activeCustomization.levelMediumColor;
+  if (level > 35) return activeCustomization.levelWarningColor;
+  if (level >= activeCustomization.criticalThreshold) return activeCustomization.levelLowColor;
+  return activeCustomization.levelCriticalColor;
+}
+
+function updateBatteryDisplay(snapshot) {
+  const level = Math.round(snapshot.level * 100);
+  const batteryColor = getBatteryColor(level);
+
+  percent.textContent = `${level}%`;
+
+  if (snapshot.charging) {
+    leftFill.style.background = activeCustomization.chargingColor;
+    bolt.style.display = "flex";
+    percent.style.color = activeCustomization.chargingColor;
+    percent.classList.remove("low-battery-alert");
+  } else {
+    leftFill.style.background = "#9ca3af";
+    bolt.style.display = "none";
+    percent.style.color = batteryColor;
+    percent.classList.toggle("low-battery-alert", level < activeCustomization.criticalThreshold);
+  }
+
+  rightFill.style.height = `${level}%`;
+  rightFill.style.background = batteryColor;
+  rightBubbles.style.setProperty("--bubble-color", batteryColor);
 }
 
 timezoneSelect.addEventListener("change", event => {
@@ -604,77 +799,89 @@ timezoneSelect.addEventListener("change", event => {
   controlsPanel.addEventListener(eventName, event => {
     event.stopPropagation();
   });
+  themeSwitch.addEventListener(eventName, event => {
+    event.stopPropagation();
+  });
+
+  paletteButton.addEventListener(eventName, event => {
+    event.stopPropagation();
+  });
+
+  palettePanel.addEventListener(eventName, event => {
+    event.stopPropagation();
+  });
 });
 
-if (themeSwitch && themeLightButton && themeDarkButton) {
-  ["pointerdown", "mousedown", "click", "touchstart"].forEach(eventName => {
-    themeSwitch.addEventListener(eventName, event => {
-      event.stopPropagation();
-    });
-  });
+themeLightButton.addEventListener("click", () => {
+  applyTheme("light");
+  saveTheme("light");
+});
 
-  themeLightButton.addEventListener("click", () => {
-    applyTheme("light");
-    saveTheme("light");
-  });
+themeDarkButton.addEventListener("click", () => {
+  applyTheme("dark");
+  saveTheme("dark");
+});
 
-  themeDarkButton.addEventListener("click", () => {
-    applyTheme("dark");
-    saveTheme("dark");
-  });
-}
+paletteButton.addEventListener("click", () => {
+  const isOpen = paletteButton.getAttribute("aria-expanded") === "true";
+  setPalettePanelOpen(!isOpen);
+});
 
-if (paletteButton && palettePanel) {
-  ["pointerdown", "mousedown", "click", "touchstart"].forEach(eventName => {
-    paletteButton.addEventListener(eventName, event => {
-      event.stopPropagation();
-    });
-
-    palettePanel.addEventListener(eventName, event => {
-      event.stopPropagation();
-    });
-  });
-
-  paletteButton.addEventListener("click", () => {
-    const isOpen = paletteButton.getAttribute("aria-expanded") === "true";
-    setPalettePanelOpen(!isOpen);
-  });
-}
-
-[backgroundColorInput, accentColorInput, logoColorInput].forEach(input => {
-  if (!input) {
-    return;
-  }
-
+[
+  backgroundLightInput,
+  backgroundDarkInput,
+  textLightInput,
+  textDarkInput,
+  brandTextInput,
+  brandIconInput,
+  chargingColorInput,
+  chargingIconInput,
+  levelHighColorInput,
+  levelMediumColorInput,
+  levelWarningColorInput,
+  levelLowColorInput,
+  levelCriticalColorInput,
+  criticalThresholdInput
+].forEach(input => {
   input.addEventListener("input", () => {
-    activePalette = {
-      background: backgroundColorInput?.value || DEFAULT_PALETTE.background,
-      accent: accentColorInput?.value || DEFAULT_PALETTE.accent,
-      logo: logoColorInput?.value || DEFAULT_PALETTE.logo
-    };
-
-    applyPalette(activePalette);
-    savePalette(activePalette);
+    commitCustomization(readCustomizationFromInputs());
   });
 });
+
+undoButton.addEventListener("click", undoCustomization);
+redoButton.addEventListener("click", redoCustomization);
+resetPaletteButton.addEventListener("click", resetCustomization);
 
 document.body.addEventListener("click", event => {
-  if (event.target.closest(".timezone-picker")) {
-    return;
-  }
-
-  if (event.target.closest(".palette-panel") || event.target.closest(".palette-button")) {
+  if (
+    event.target.closest(".timezone-picker") ||
+    event.target.closest(".palette-panel") ||
+    event.target.closest(".palette-button") ||
+    event.target.closest(".theme-controls")
+  ) {
     return;
   }
 
   setPalettePanelOpen(false);
-
   toggleFullscreen();
 });
 
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     setPalettePanelOpen(false);
+  }
+
+  if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "z") {
+    event.preventDefault();
+    undoCustomization();
+  }
+
+  if (
+    (event.ctrlKey || event.metaKey) &&
+    (event.key.toLowerCase() === "y" || (event.shiftKey && event.key.toLowerCase() === "z"))
+  ) {
+    event.preventDefault();
+    redoCustomization();
   }
 });
 
@@ -718,32 +925,13 @@ for (let index = 0; index < 6; index += 1) {
   rightBubbles.appendChild(bubble);
 }
 
-if ('getBattery' in navigator) {
+if ("getBattery" in navigator) {
   navigator.getBattery().then(battery => {
     setBatteryAvailability(true);
 
     function updateBattery() {
-      const level = Math.round(battery.level * 100);
-      percent.textContent = level + "%";
-      const batteryColor = getBatteryColor(level);
-
-      // ===== Si ça charge =====
-      if (battery.charging) {
-        leftFill.style.background = "#22c55e";
-        bolt.style.display = "flex";
-        percent.style.color = "#22c55e";
-        percent.classList.remove("low-battery-alert");
-      } else {
-        leftFill.style.background = "#9ca3af";
-        bolt.style.display = "none";
-        percent.style.color = batteryColor;
-        percent.classList.toggle("low-battery-alert", level < 15);
-      }
-
-      // ===== Batterie droite =====
-      rightFill.style.height = level + "%";
-      rightFill.style.background = batteryColor;
-      rightBubbles.style.setProperty("--bubble-color", batteryColor);
+      batterySnapshot = battery;
+      updateBatteryDisplay(batterySnapshot);
     }
 
     updateBattery();

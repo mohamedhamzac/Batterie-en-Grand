@@ -14,8 +14,9 @@
 
 <body>
   <div class="brand-mark" aria-label="Batterie en Grand">
-    <img src="logo.svg" alt="Logo Batterie en Grand">
-    <span>Batterie en Grand</span>
+    <img id="brandLogoImage" src="logo.svg" alt="Logo Batterie en Grand">
+    <span id="brandLogoGlyph" class="brand-logo-glyph" aria-hidden="true"></span>
+    <span id="brandLogoText">Batterie en Grand</span>
   </div>
 
   <div class="container">
@@ -88,18 +89,83 @@
   </div>
 
   <div id="palettePanel" class="palette-panel" aria-hidden="true">
-    <label class="palette-field">
-      <span>Fond</span>
-      <input id="backgroundColorInput" type="color" value="#dbeafe" aria-label="Choisir la couleur du fond">
-    </label>
-    <label class="palette-field">
-      <span>Accent</span>
-      <input id="accentColorInput" type="color" value="#38bdf8" aria-label="Choisir la couleur d'accent">
-    </label>
-    <label class="palette-field">
-      <span>Logo</span>
-      <input id="logoColorInput" type="color" value="#22c55e" aria-label="Choisir la couleur du logo">
-    </label>
+    <div class="palette-actions">
+      <button id="undoButton" class="palette-action-button" type="button" aria-label="Annuler une modification">←</button>
+      <button id="redoButton" class="palette-action-button" type="button" aria-label="Rétablir une modification">→</button>
+      <button id="resetPaletteButton" class="palette-action-button palette-reset-button" type="button">Réinitialiser</button>
+    </div>
+
+    <div class="palette-section">
+      <p class="palette-section-title">Fond</p>
+      <label class="palette-field">
+        <span>Clair</span>
+        <input id="backgroundLightInput" type="color" value="#dbeafe" aria-label="Choisir la couleur du fond clair">
+      </label>
+      <label class="palette-field">
+        <span>Sombre</span>
+        <input id="backgroundDarkInput" type="color" value="#020617" aria-label="Choisir la couleur du fond sombre">
+      </label>
+    </div>
+
+    <div class="palette-section">
+      <p class="palette-section-title">Texte</p>
+      <label class="palette-field">
+        <span>Clair</span>
+        <input id="textLightInput" type="color" value="#0f172a" aria-label="Choisir la couleur du texte clair">
+      </label>
+      <label class="palette-field">
+        <span>Sombre</span>
+        <input id="textDarkInput" type="color" value="#ffffff" aria-label="Choisir la couleur du texte sombre">
+      </label>
+    </div>
+
+    <div class="palette-section">
+      <p class="palette-section-title">Logo du haut</p>
+      <label class="palette-field palette-field-text">
+        <span>Texte</span>
+        <input id="brandTextInput" type="text" value="Batterie en Grand" maxlength="40" aria-label="Modifier le texte du logo en haut">
+      </label>
+      <label class="palette-field palette-field-text">
+        <span>Icône</span>
+        <input id="brandIconInput" type="text" value="" maxlength="4" placeholder="SVG" aria-label="Modifier l'icône du logo en haut">
+      </label>
+    </div>
+
+    <div class="palette-section">
+      <p class="palette-section-title">Batterie</p>
+      <label class="palette-field">
+        <span>Charge</span>
+        <input id="chargingColorInput" type="color" value="#22c55e" aria-label="Choisir la couleur quand la batterie charge">
+      </label>
+      <label class="palette-field palette-field-text">
+        <span>Icône charge</span>
+        <input id="chargingIconInput" type="text" value="⚡" maxlength="4" aria-label="Modifier l'icône de charge">
+      </label>
+      <label class="palette-field">
+        <span>80% et +</span>
+        <input id="levelHighColorInput" type="color" value="#22c55e" aria-label="Couleur pour 80 pourcent et plus">
+      </label>
+      <label class="palette-field">
+        <span>50% et +</span>
+        <input id="levelMediumColorInput" type="color" value="#facc15" aria-label="Couleur pour 50 pourcent et plus">
+      </label>
+      <label class="palette-field">
+        <span>36% et +</span>
+        <input id="levelWarningColorInput" type="color" value="#fb923c" aria-label="Couleur pour 36 pourcent et plus">
+      </label>
+      <label class="palette-field">
+        <span id="levelLowColorLabel">15% et +</span>
+        <input id="levelLowColorInput" type="color" value="#dc2626" aria-label="Couleur pour 15 pourcent et plus">
+      </label>
+      <label class="palette-field">
+        <span id="levelCriticalColorLabel">Moins de 15%</span>
+        <input id="levelCriticalColorInput" type="color" value="#7f1d1d" aria-label="Couleur critique de la batterie">
+      </label>
+      <label class="palette-field palette-field-number">
+        <span>Seuil critique</span>
+        <input id="criticalThresholdInput" type="number" value="15" min="1" max="99" aria-label="Seuil critique en pourcentage">
+      </label>
+    </div>
   </div>
 
   <div class="hint-group">

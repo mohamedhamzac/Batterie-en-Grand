@@ -1,9 +1,15 @@
 (function initThemeBeforePaint() {
-  const storageKey = "batterie-en-grand-theme";
-  const paletteStorageKey = "batterie-en-grand-palette";
+  const themeStorageKey = "batterie-en-grand-theme";
+  const customizationStorageKey = "batterie-en-grand-customization";
+  const defaults = {
+    backgroundLight: "#dbeafe",
+    backgroundDark: "#020617",
+    textLight: "#0f172a",
+    textDark: "#ffffff"
+  };
 
   function isHexColor(value) {
-    return /^#[0-9a-f]{6}$/i.test(value);
+    return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
   }
 
   function hexToRgb(hexColor) {
@@ -37,44 +43,54 @@
   }
 
   try {
-    const storedTheme = localStorage.getItem(storageKey);
-    const storedPalette = JSON.parse(localStorage.getItem(paletteStorageKey) || "null");
+    const storedTheme = localStorage.getItem(themeStorageKey);
+    const storedCustomization = JSON.parse(localStorage.getItem(customizationStorageKey) || "null");
     const prefersDarkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const resolvedTheme = storedTheme === "dark" || storedTheme === "light"
       ? storedTheme
       : (prefersDarkTheme ? "dark" : "light");
-    const hasPalette =
-      storedPalette &&
-      isHexColor(storedPalette.background) &&
-      isHexColor(storedPalette.accent) &&
-      isHexColor(storedPalette.logo);
+    const isDarkTheme = resolvedTheme === "dark";
+    const background = isDarkTheme
+      ? (isHexColor(storedCustomization?.backgroundDark) ? storedCustomization.backgroundDark : defaults.backgroundDark)
+      : (isHexColor(storedCustomization?.backgroundLight) ? storedCustomization.backgroundLight : defaults.backgroundLight);
+    const textColor = isDarkTheme
+      ? (isHexColor(storedCustomization?.textDark) ? storedCustomization.textDark : defaults.textDark)
+      : (isHexColor(storedCustomization?.textLight) ? storedCustomization.textLight : defaults.textLight);
 
-    document.documentElement.classList.toggle("theme-dark", resolvedTheme === "dark");
+    document.documentElement.classList.toggle("theme-dark", isDarkTheme);
 
-    if (hasPalette) {
-      const isDarkTheme = resolvedTheme === "dark";
-      const start = isDarkTheme
-        ? rgbToHex(mixColors(storedPalette.background, "#0f172a", 0.7))
-        : rgbToHex(mixColors(storedPalette.background, "#ffffff", 0.62));
-      const mid = isDarkTheme
-        ? rgbToHex(mixColors(storedPalette.background, "#020617", 0.74))
-        : rgbToHex(mixColors(storedPalette.background, "#dbeafe", 0.4));
-      const end = isDarkTheme
-        ? rgbToHex(mixColors(storedPalette.accent, "#000000", 0.82))
-        : rgbToHex(mixColors(storedPalette.accent, "#bfdbfe", 0.38));
-
-      document.documentElement.classList.add("palette-custom");
-      document.documentElement.style.setProperty(
-        "--bg-main",
-        `radial-gradient(circle at top, ${start}, ${mid} 52%, ${end} 100%)`
+    const gradient = isDarkTheme
+      ? (
+        background === defaults.backgroundDark
+          ? { start: "#020617", mid: "#020617", end: "#000000" }
+          : {
+              start: rgbToHex(mixColors(background, "#0f172a", 0.3)),
+              mid: background,
+              end: rgbToHex(mixColors(background, "#000000", 0.7))
+            }
+      )
+      : (
+        background === defaults.backgroundLight
+          ? { start: "#eff6ff", mid: "#dbeafe", end: "#bfdbfe" }
+          : {
+              start: rgbToHex(mixColors(background, "#ffffff", 0.46)),
+              mid: background,
+              end: rgbToHex(mixColors(background, "#93c5fd", 0.45))
+            }
       );
-      document.documentElement.style.setProperty("--bg-solid", mid);
-      document.documentElement.style.setProperty("--accent-main", storedPalette.accent);
-      document.documentElement.style.setProperty("--accent-soft", withAlpha(storedPalette.accent, 0.24));
-      document.documentElement.style.setProperty("--brand-shadow", `drop-shadow(0 0 18px ${withAlpha(storedPalette.logo, 0.45)})`);
-      document.documentElement.style.setProperty("--hint-color", withAlpha(storedPalette.accent, isDarkTheme ? 0.62 : 0.95));
-      document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(storedPalette.accent, isDarkTheme ? 0.42 : 0.3)}`);
-    }
+
+    document.documentElement.style.setProperty(
+      "--bg-main",
+      `radial-gradient(circle at top, ${gradient.start}, ${gradient.mid} 52%, ${gradient.end} 100%)`
+    );
+    document.documentElement.style.setProperty("--bg-solid", gradient.mid);
+    document.documentElement.style.setProperty("--text-main", textColor);
+    document.documentElement.style.setProperty("--brand-text", textColor);
+    document.documentElement.style.setProperty("--text-muted", withAlpha(textColor, isDarkTheme ? 0.6 : 0.78));
+    document.documentElement.style.setProperty("--hint-color", withAlpha(textColor, isDarkTheme ? 0.6 : 0.78));
+    document.documentElement.style.setProperty("--accent-main", textColor);
+    document.documentElement.style.setProperty("--accent-soft", withAlpha(textColor, 0.16));
+    document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(textColor, isDarkTheme ? 0.28 : 0.16)}`);
   } catch {
     document.documentElement.classList.toggle(
       "theme-dark",
