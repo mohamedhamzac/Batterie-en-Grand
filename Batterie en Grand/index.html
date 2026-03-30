@@ -22,6 +22,7 @@
   <div class="container">
     <div class="battery-panel">
       <section class="clock-panel">
+        <p id="clockDate" class="clock-date">--</p>
         <p id="clockLabel" class="clock-label">Heure actuelle</p>
         <div id="clockTime" class="clock-time">--:--:--</div>
       </section>
@@ -44,6 +45,18 @@
   </div>
 
   <div class="controls-panel">
+    <label class="timezone-search-field">
+      <span class="sr-only">Rechercher un fuseau horaire</span>
+      <input
+        id="timezoneSearchInput"
+        class="timezone-search-input"
+        type="search"
+        placeholder="Rechercher un pays ou un UTC"
+        aria-label="Rechercher un fuseau horaire"
+        autocomplete="off"
+        spellcheck="false"
+      >
+    </label>
     <label class="timezone-picker">
       <select id="timezoneSelect" class="timezone-select"></select>
     </label>
@@ -98,24 +111,63 @@
     <div class="palette-section">
       <p class="palette-section-title">Fond</p>
       <label class="palette-field">
-        <span>Clair</span>
+        <span>Page claire</span>
         <input id="backgroundLightInput" type="color" value="#dbeafe" aria-label="Choisir la couleur du fond clair">
       </label>
       <label class="palette-field">
-        <span>Sombre</span>
+        <span>Page sombre</span>
         <input id="backgroundDarkInput" type="color" value="#020617" aria-label="Choisir la couleur du fond sombre">
+      </label>
+      <label class="palette-field">
+        <span>Panneau clair</span>
+        <input id="panelLightInput" type="color" value="#ffffff" aria-label="Choisir la couleur claire du panneau principal">
+      </label>
+      <label class="palette-field">
+        <span>Panneau sombre</span>
+        <input id="panelDarkInput" type="color" value="#0f172a" aria-label="Choisir la couleur sombre du panneau principal">
       </label>
     </div>
 
     <div class="palette-section">
-      <p class="palette-section-title">Texte</p>
+      <p class="palette-section-title">Heure</p>
       <label class="palette-field">
-        <span>Clair</span>
-        <input id="textLightInput" type="color" value="#0f172a" aria-label="Choisir la couleur du texte clair">
+        <span>Couleur date</span>
+        <input id="dateColorInput" type="color" value="#2563eb" aria-label="Choisir la couleur de la date">
       </label>
       <label class="palette-field">
-        <span>Sombre</span>
-        <input id="textDarkInput" type="color" value="#ffffff" aria-label="Choisir la couleur du texte sombre">
+        <span>Couleur libellé</span>
+        <input id="clockLabelColorInput" type="color" value="#1d4ed8" aria-label="Choisir la couleur du libellé de l'heure">
+      </label>
+      <label class="palette-field">
+        <span>Couleur heure</span>
+        <input id="clockTimeColorInput" type="color" value="#0f172a" aria-label="Choisir la couleur de l'heure">
+      </label>
+      <label class="palette-field palette-field-time">
+        <span>Heure manuelle</span>
+        <input id="manualTimeInput" type="time" value="" step="1" aria-label="Modifier l'heure affichée">
+      </label>
+      <button id="resetManualTimeButton" class="palette-action-button palette-inline-button" type="button">
+        Revenir à l'heure automatique
+      </button>
+    </div>
+
+    <div class="palette-section">
+      <p class="palette-section-title">Textes affichage</p>
+      <label class="palette-field">
+        <span>Logo texte</span>
+        <input id="brandTextColorInput" type="color" value="#0f172a" aria-label="Choisir la couleur du texte du logo">
+      </label>
+      <label class="palette-field">
+        <span>Logo icône</span>
+        <input id="brandIconColorInput" type="color" value="#0f172a" aria-label="Choisir la couleur de l'icône du logo">
+      </label>
+      <label class="palette-field">
+        <span>Pourcentage repos</span>
+        <input id="percentColorInput" type="color" value="#0f172a" aria-label="Choisir la couleur du pourcentage au repos">
+      </label>
+      <label class="palette-field">
+        <span>Pourcentage charge</span>
+        <input id="percentChargingColorInput" type="color" value="#22c55e" aria-label="Choisir la couleur du pourcentage en charge">
       </label>
     </div>
 
@@ -123,23 +175,35 @@
       <p class="palette-section-title">Logo du haut</p>
       <label class="palette-field palette-field-text">
         <span>Texte</span>
-        <input id="brandTextInput" type="text" value="Batterie en Grand" maxlength="40" aria-label="Modifier le texte du logo en haut">
+        <input id="brandTextInput" type="text" value="Batterie en Grand" maxlength="80" aria-label="Modifier le texte du logo en haut">
       </label>
       <label class="palette-field palette-field-text">
         <span>Icône</span>
-        <input id="brandIconInput" type="text" value="" maxlength="4" placeholder="SVG" aria-label="Modifier l'icône du logo en haut">
+        <input id="brandIconInput" type="text" value="" maxlength="80" placeholder="Texte ou symbole" aria-label="Modifier l'icône du logo en haut">
       </label>
     </div>
 
     <div class="palette-section">
       <p class="palette-section-title">Batterie</p>
       <label class="palette-field">
-        <span>Charge</span>
-        <input id="chargingColorInput" type="color" value="#22c55e" aria-label="Choisir la couleur quand la batterie charge">
+        <span>Indicateur en charge</span>
+        <input id="chargingActiveColorInput" type="color" value="#22c55e" aria-label="Choisir la couleur de l'indicateur quand la batterie charge">
+      </label>
+      <label class="palette-field">
+        <span>Indicateur au repos</span>
+        <input id="chargingIdleColorInput" type="color" value="#9ca3af" aria-label="Choisir la couleur de l'indicateur quand la batterie ne charge pas">
+      </label>
+      <label class="palette-field">
+        <span>Texte de charge</span>
+        <input id="chargingTextColorInput" type="color" value="#ffffff" aria-label="Choisir la couleur du texte de charge">
+      </label>
+      <label class="palette-field">
+        <span>Contour batterie droite</span>
+        <input id="batteryShellColorInput" type="color" value="#0f172a" aria-label="Choisir la couleur du contour de la batterie droite">
       </label>
       <label class="palette-field palette-field-text">
-        <span>Icône charge</span>
-        <input id="chargingIconInput" type="text" value="⚡" maxlength="4" aria-label="Modifier l'icône de charge">
+        <span>Texte charge</span>
+        <input id="chargingIconInput" type="text" value="⚡" maxlength="80" aria-label="Modifier le texte de charge">
       </label>
       <label class="palette-field">
         <span>80% et +</span>
@@ -150,8 +214,8 @@
         <input id="levelMediumColorInput" type="color" value="#facc15" aria-label="Couleur pour 50 pourcent et plus">
       </label>
       <label class="palette-field">
-        <span>36% et +</span>
-        <input id="levelWarningColorInput" type="color" value="#fb923c" aria-label="Couleur pour 36 pourcent et plus">
+        <span>35% et +</span>
+        <input id="levelWarningColorInput" type="color" value="#fb923c" aria-label="Couleur pour 35 pourcent et plus">
       </label>
       <label class="palette-field">
         <span id="levelLowColorLabel">15% et +</span>
@@ -168,8 +232,10 @@
     </div>
   </div>
 
+  <div id="warningOverlay" class="warning-overlay" aria-hidden="true"></div>
+
   <div class="hint-group">
-    <div id="fullscreenHint" class="hint">Cliquer pour plein écran</div>
+    <button id="fullscreenHint" class="hint hint-button" type="button">Cliquer pour plein écran</button>
   </div>
 
   <script src="script.js"></script>

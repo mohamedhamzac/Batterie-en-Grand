@@ -4,8 +4,13 @@
   const defaults = {
     backgroundLight: "#dbeafe",
     backgroundDark: "#020617",
-    textLight: "#0f172a",
-    textDark: "#ffffff"
+    panelLight: "#ffffff",
+    panelDark: "#0f172a",
+    brandTextColor: "#0f172a",
+    brandIconColor: "#0f172a",
+    dateColor: "#2563eb",
+    clockLabelColor: "#1d4ed8",
+    clockTimeColor: "#0f172a"
   };
 
   function isHexColor(value) {
@@ -53,9 +58,14 @@
     const background = isDarkTheme
       ? (isHexColor(storedCustomization?.backgroundDark) ? storedCustomization.backgroundDark : defaults.backgroundDark)
       : (isHexColor(storedCustomization?.backgroundLight) ? storedCustomization.backgroundLight : defaults.backgroundLight);
-    const textColor = isDarkTheme
-      ? (isHexColor(storedCustomization?.textDark) ? storedCustomization.textDark : defaults.textDark)
-      : (isHexColor(storedCustomization?.textLight) ? storedCustomization.textLight : defaults.textLight);
+    const panelColor = isDarkTheme
+      ? (isHexColor(storedCustomization?.panelDark) ? storedCustomization.panelDark : defaults.panelDark)
+      : (isHexColor(storedCustomization?.panelLight) ? storedCustomization.panelLight : defaults.panelLight);
+    const brandTextColor = isHexColor(storedCustomization?.brandTextColor) ? storedCustomization.brandTextColor : defaults.brandTextColor;
+    const brandIconColor = isHexColor(storedCustomization?.brandIconColor) ? storedCustomization.brandIconColor : defaults.brandIconColor;
+    const dateColor = isHexColor(storedCustomization?.dateColor) ? storedCustomization.dateColor : defaults.dateColor;
+    const clockLabelColor = isHexColor(storedCustomization?.clockLabelColor) ? storedCustomization.clockLabelColor : defaults.clockLabelColor;
+    const clockTimeColor = isHexColor(storedCustomization?.clockTimeColor) ? storedCustomization.clockTimeColor : defaults.clockTimeColor;
 
     document.documentElement.classList.toggle("theme-dark", isDarkTheme);
 
@@ -84,13 +94,14 @@
       `radial-gradient(circle at top, ${gradient.start}, ${gradient.mid} 52%, ${gradient.end} 100%)`
     );
     document.documentElement.style.setProperty("--bg-solid", gradient.mid);
-    document.documentElement.style.setProperty("--text-main", textColor);
-    document.documentElement.style.setProperty("--brand-text", textColor);
-    document.documentElement.style.setProperty("--text-muted", withAlpha(textColor, isDarkTheme ? 0.6 : 0.78));
-    document.documentElement.style.setProperty("--hint-color", withAlpha(textColor, isDarkTheme ? 0.6 : 0.78));
-    document.documentElement.style.setProperty("--accent-main", textColor);
-    document.documentElement.style.setProperty("--accent-soft", withAlpha(textColor, 0.16));
-    document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(textColor, isDarkTheme ? 0.28 : 0.16)}`);
+    document.documentElement.style.setProperty("--panel-bg", withAlpha(panelColor, isDarkTheme ? 0.34 : 0.82));
+    document.documentElement.style.setProperty("--panel-border", isDarkTheme ? withAlpha(defaults.panelLight, 0.14) : withAlpha(defaults.panelDark, 0.15));
+    document.documentElement.style.setProperty("--brand-text", brandTextColor);
+    document.documentElement.style.setProperty("--brand-icon", brandIconColor);
+    document.documentElement.style.setProperty("--date-color", dateColor);
+    document.documentElement.style.setProperty("--clock-label-color", clockLabelColor);
+    document.documentElement.style.setProperty("--clock-time-color", clockTimeColor);
+    document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(clockTimeColor, isDarkTheme ? 0.28 : 0.16)}`);
   } catch {
     document.documentElement.classList.toggle(
       "theme-dark",
