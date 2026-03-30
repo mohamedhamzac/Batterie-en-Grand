@@ -30,6 +30,9 @@ html.theme-dark {
   --control-bg: rgba(255, 255, 255, 0.92);
   --control-border: rgba(15, 23, 42, 0.16);
   --control-text: #0f172a;
+  --timezone-menu-bg: rgba(255, 255, 255, 0.92);
+  --timezone-menu-text: #0f172a;
+  --timezone-menu-highlight: #dbeafe;
   --battery-shell: #0f172a;
   --battery-inner: #f8fafc;
   --bubble-tint: rgba(15, 23, 42, 0.48);
@@ -59,6 +62,9 @@ html.theme-dark {
   --control-bg: rgba(15, 23, 42, 0.88);
   --control-border: rgba(255, 255, 255, 0.2);
   --control-text: #ffffff;
+  --timezone-menu-bg: rgba(15, 23, 42, 0.88);
+  --timezone-menu-text: #ffffff;
+  --timezone-menu-highlight: rgba(59, 130, 246, 0.24);
   --battery-shell: #ffffff;
   --battery-inner: #020617;
   --bubble-tint: rgba(255, 255, 255, 0.5);
@@ -171,6 +177,7 @@ body.fullscreen-idle {
   background: var(--panel-bg);
   box-shadow: var(--panel-shadow);
   backdrop-filter: blur(14px);
+  margin: 0 auto;
 }
 
 body.no-battery .battery-panel {
@@ -207,7 +214,8 @@ body.no-battery .percent {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  justify-content: center;
+  gap: 14px;
   width: min(1200px, calc(100vw - 48px));
 }
 
@@ -412,11 +420,12 @@ body.no-battery .percent {
 
 .clock-date {
   margin: 0;
-  font-size: clamp(36px, 5vw, 52px);
+  font-size: clamp(44px, 6vw, 68px);
   font-weight: 700;
   color: var(--date-color);
   text-align: center;
   text-shadow: var(--clock-glow);
+  line-height: 1;
 }
 
 .clock-label {
@@ -429,7 +438,7 @@ body.no-battery .percent {
 }
 
 .clock-time {
-  font-size: clamp(36px, 5vw, 52px);
+  font-size: clamp(34px, 4.3vw, 46px);
   font-weight: 700;
   letter-spacing: 0.14em;
   line-height: 1;
@@ -488,8 +497,8 @@ body.no-battery .percent {
   padding: 10px 14px;
   border: 1px solid var(--control-border);
   border-radius: 999px;
-  background: var(--control-bg);
-  color: var(--control-text);
+  background: var(--timezone-menu-bg);
+  color: var(--timezone-menu-text);
   font-size: 14px;
   text-align: center;
   outline: none;
@@ -507,7 +516,7 @@ body.no-battery .percent {
   padding: 10px;
   border: 1px solid var(--control-border);
   border-radius: 20px;
-  background: var(--control-bg);
+  background: var(--timezone-menu-bg);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
 }
 
@@ -529,19 +538,19 @@ body.no-battery .percent {
   border: 1px solid var(--control-border);
   border-radius: 14px;
   background: transparent;
-  color: var(--control-text);
+  color: var(--timezone-menu-text);
   text-align: left;
   cursor: pointer;
 }
 
 .timezone-result:hover,
 .timezone-result.is-active {
-  background: var(--accent-soft);
+  background: var(--timezone-menu-highlight);
 }
 
 .timezone-empty {
   padding: 10px 12px;
-  color: var(--control-text);
+  color: var(--timezone-menu-text);
   opacity: 0.7;
 }
 
@@ -955,7 +964,11 @@ body.device-mobile .clock-label {
 }
 
 body.device-mobile .clock-time {
-  font-size: clamp(28px, 10vw, 40px);
+  font-size: clamp(26px, 8vw, 36px);
+}
+
+body.device-mobile .clock-date {
+  font-size: clamp(34px, 10vw, 46px);
 }
 
 body.device-mobile .battery-left {

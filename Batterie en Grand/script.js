@@ -11,6 +11,7 @@ const WEEKDAY_NAMES = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendr
 const MONTH_NAMES = ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"];
 const DEFAULT_CUSTOMIZATION = Object.freeze({
   backgroundLight: "#dbeafe", backgroundDark: "#020617", panelLight: "#ffffff", panelDark: "#0f172a",
+  timezoneMenuBackground: "#ffffff", timezoneMenuText: "#0f172a", timezoneMenuHighlight: "#dbeafe",
   dateColor: "#2563eb", clockLabelColor: "#1d4ed8", clockTimeColor: "#0f172a",
   manualTime: "", brandTextColor: "#0f172a", brandIconColor: "#0f172a",
   percentColor: "#0f172a", percentChargingColor: "#22c55e", brandText: "Batterie en Grand", brandIcon: "",
@@ -51,7 +52,7 @@ const levelLowColorLabel = ids("levelLowColorLabel");
 const levelCriticalColorLabel = ids("levelCriticalColorLabel");
 
 const inputNames = [
-  "backgroundLightInput","backgroundDarkInput","panelLightInput","panelDarkInput","dateColorInput","clockLabelColorInput","clockTimeColorInput","manualTimeInput","brandTextColorInput","brandIconColorInput","percentColorInput","percentChargingColorInput","brandTextInput","brandIconInput","chargingActiveColorInput","chargingIdleColorInput","chargingTextColorInput","batteryShellColorInput","chargingIconInput","levelHighColorInput","levelMediumColorInput","levelWarningColorInput","levelLowColorInput","levelCriticalColorInput","criticalThresholdInput"
+  "backgroundLightInput","backgroundDarkInput","panelLightInput","panelDarkInput","timezoneMenuBackgroundInput","timezoneMenuTextInput","timezoneMenuHighlightInput","dateColorInput","clockLabelColorInput","clockTimeColorInput","manualTimeInput","brandTextColorInput","brandIconColorInput","percentColorInput","percentChargingColorInput","brandTextInput","brandIconInput","chargingActiveColorInput","chargingIdleColorInput","chargingTextColorInput","batteryShellColorInput","chargingIconInput","levelHighColorInput","levelMediumColorInput","levelWarningColorInput","levelLowColorInput","levelCriticalColorInput","criticalThresholdInput"
 ];
 const inputs = Object.fromEntries(inputNames.map(name => [name, ids(name)]));
 
@@ -87,15 +88,38 @@ function cloneCustomization(c) { return JSON.parse(JSON.stringify(c)); }
 function areCustomizationsEqual(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 function sanitizeOptionalText(v, max = 80) { return typeof v === "string" ? v.trim().slice(0, max) : ""; }
 function sanitizeRequiredText(v, fallback, max = 80) { return sanitizeOptionalText(v, max) || fallback; }
-function updateFullscreenHint() { fullscreenHint.textContent = document.fullscreenElement ? "Quitter le plein écran" : "Cliquer pour plein écran"; }
+function getActiveFullscreenElement() {
+  return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
+}
+function updateFullscreenHint() { fullscreenHint.textContent = getActiveFullscreenElement() ? "Quitter le plein écran" : "Cliquer pour plein écran"; }
 function toggleFullscreen() {
   removeHashFromUrl();
-  const action = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
-  Promise.resolve(action).catch(() => {});
+
+  if (getActiveFullscreenElement()) {
+    const exitFullscreen =
+      document.exitFullscreen ||
+      document.webkitExitFullscreen ||
+      document.msExitFullscreen;
+
+    if (typeof exitFullscreen === "function") {
+      Promise.resolve(exitFullscreen.call(document)).catch(() => {});
+    }
+    return;
+  }
+
+  const root = document.documentElement;
+  const requestFullscreen =
+    root.requestFullscreen ||
+    root.webkitRequestFullscreen ||
+    root.msRequestFullscreen;
+
+  if (typeof requestFullscreen === "function") {
+    Promise.resolve(requestFullscreen.call(root)).catch(() => {});
+  }
 }
 function setCursorVisible() { document.body.classList.remove("fullscreen-idle"); }
 function clearCursorHideTimer() { if (cursorHideTimerId) { clearTimeout(cursorHideTimerId); cursorHideTimerId = null; } }
-function scheduleCursorHide() { clearCursorHideTimer(); if (!document.fullscreenElement) return setCursorVisible(); cursorHideTimerId = setTimeout(() => { if (document.fullscreenElement) document.body.classList.add("fullscreen-idle"); }, CURSOR_HIDE_DELAY_MS); }
+function scheduleCursorHide() { clearCursorHideTimer(); if (!getActiveFullscreenElement()) return setCursorVisible(); cursorHideTimerId = setTimeout(() => { if (getActiveFullscreenElement()) document.body.classList.add("fullscreen-idle"); }, CURSOR_HIDE_DELAY_MS); }
 function refreshCursorVisibility() { setCursorVisible(); scheduleCursorHide(); }
 function detectDeviceType() { const ua = navigator.userAgent || ""; const coarse = window.matchMedia("(pointer: coarse)").matches; const short = Math.min(window.innerWidth, window.innerHeight); const long = Math.max(window.innerWidth, window.innerHeight); if (/iPad|Tablet|PlayBook|Silk/i.test(ua) || (coarse && short >= 700 && long >= 900)) return "tablet"; if (/Android|iPhone|iPod|IEMobile|Opera Mini|Windows Phone/i.test(ua) || (coarse && short < 700)) return "mobile"; return "desktop"; }
 function applyDeviceLayout() { const t = detectDeviceType(); document.body.dataset.device = t; document.body.classList.toggle("device-mobile", t === "mobile"); document.body.classList.toggle("device-tablet", t === "tablet"); document.body.classList.toggle("device-desktop", t === "desktop"); }
@@ -117,6 +141,9 @@ function sanitizeCustomization(source) {
     backgroundDark: isHexColor(source.backgroundDark) ? source.backgroundDark : DEFAULT_CUSTOMIZATION.backgroundDark,
     panelLight: isHexColor(source.panelLight) ? source.panelLight : DEFAULT_CUSTOMIZATION.panelLight,
     panelDark: isHexColor(source.panelDark) ? source.panelDark : DEFAULT_CUSTOMIZATION.panelDark,
+    timezoneMenuBackground: isHexColor(source.timezoneMenuBackground) ? source.timezoneMenuBackground : DEFAULT_CUSTOMIZATION.timezoneMenuBackground,
+    timezoneMenuText: isHexColor(source.timezoneMenuText) ? source.timezoneMenuText : DEFAULT_CUSTOMIZATION.timezoneMenuText,
+    timezoneMenuHighlight: isHexColor(source.timezoneMenuHighlight) ? source.timezoneMenuHighlight : DEFAULT_CUSTOMIZATION.timezoneMenuHighlight,
     dateColor: isHexColor(source.dateColor) ? source.dateColor : DEFAULT_CUSTOMIZATION.dateColor,
     clockLabelColor: isHexColor(source.clockLabelColor) ? source.clockLabelColor : DEFAULT_CUSTOMIZATION.clockLabelColor,
     clockTimeColor: isHexColor(source.clockTimeColor) ? source.clockTimeColor : DEFAULT_CUSTOMIZATION.clockTimeColor,
@@ -144,8 +171,8 @@ function getStoredCustomization() { try { return sanitizeCustomization(JSON.pars
 function saveCustomization(c) { try { localStorage.setItem(CUSTOMIZATION_STORAGE_KEY, JSON.stringify(c)); } catch {} }
 function pushUndoState(prev) { const snap = cloneCustomization(prev); if (!undoStack.length || !areCustomizationsEqual(undoStack.at(-1), snap)) undoStack.push(snap); if (undoStack.length > HISTORY_LIMIT) undoStack.shift(); redoStack = []; }
 function updateHistoryButtons() { undoButton.disabled = !undoStack.length; redoButton.disabled = !redoStack.length; }
-function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); }
-function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
+function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); }
+function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.timezoneMenuBackground = inputs.timezoneMenuBackgroundInput.value; raw.timezoneMenuText = inputs.timezoneMenuTextInput.value; raw.timezoneMenuHighlight = inputs.timezoneMenuHighlightInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
 function fitTextToBounds(el, max, min) { if (!el) return; el.style.fontSize = `${max}px`; if (!el.textContent.trim()) return; let size = max; while (size > min && (el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight)) { size -= 1; el.style.fontSize = `${size}px`; } }
 function applyTextSizing() { fitTextToBounds(brandLogoGlyph, 34, 8); fitTextToBounds(bolt, 36, 9); }
 function buildGradient(theme, c) { return theme === "dark" ? { start: rgbToHex(mixColors(c.backgroundDark, "#0f172a", 0.24)), mid: c.backgroundDark, end: rgbToHex(mixColors(c.backgroundDark, "#000000", 0.7)) } : { start: rgbToHex(mixColors(c.backgroundLight, "#ffffff", 0.42)), mid: c.backgroundLight, end: rgbToHex(mixColors(c.backgroundLight, "#93c5fd", 0.38)) }; }
@@ -160,6 +187,9 @@ function applyCustomization(customization, syncInputs = true) {
   setRootVariable("--panel-bg", withAlpha(panelColor, dark ? 0.34 : 0.82));
   setRootVariable("--panel-border", dark ? withAlpha(c.panelLight, 0.14) : withAlpha(c.panelDark, 0.15));
   setRootVariable("--panel-shadow", dark ? `0 12px 30px ${withAlpha("#000000", 0.28)}` : `0 12px 30px ${withAlpha(c.backgroundDark, 0.18)}`);
+  setRootVariable("--timezone-menu-bg", withAlpha(c.timezoneMenuBackground, dark ? 0.92 : 0.96));
+  setRootVariable("--timezone-menu-text", c.timezoneMenuText);
+  setRootVariable("--timezone-menu-highlight", withAlpha(c.timezoneMenuHighlight, dark ? 0.4 : 0.72));
   setRootVariable("--brand-text", c.brandTextColor);
   setRootVariable("--brand-icon", c.brandIconColor);
   setRootVariable("--date-color", dark ? "#ffffff" : "#000000");
@@ -327,7 +357,9 @@ document.addEventListener("keydown", event => {
   if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "z") { event.preventDefault(); undoCustomization(); }
   if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === "y" || (event.shiftKey && event.key.toLowerCase() === "z"))) { event.preventDefault(); redoCustomization(); }
 });
-document.addEventListener("fullscreenchange", () => { removeHashFromUrl(); updateFullscreenHint(); refreshCursorVisibility(); });
+["fullscreenchange", "webkitfullscreenchange", "msfullscreenchange"].forEach(eventName => {
+  document.addEventListener(eventName, () => { removeHashFromUrl(); updateFullscreenHint(); refreshCursorVisibility(); });
+});
 document.addEventListener("DOMContentLoaded", removeHashFromUrl);
 window.addEventListener("load", removeHashFromUrl);
 window.addEventListener("pageshow", removeHashFromUrl);

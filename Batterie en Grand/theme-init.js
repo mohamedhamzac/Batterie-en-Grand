@@ -6,6 +6,9 @@
     backgroundDark: "#020617",
     panelLight: "#ffffff",
     panelDark: "#0f172a",
+    timezoneMenuBackground: "#ffffff",
+    timezoneMenuText: "#0f172a",
+    timezoneMenuHighlight: "#dbeafe",
     brandTextColor: "#0f172a",
     brandIconColor: "#0f172a",
     dateColor: "#2563eb",
@@ -63,6 +66,9 @@
       : (isHexColor(storedCustomization?.panelLight) ? storedCustomization.panelLight : defaults.panelLight);
     const brandTextColor = isHexColor(storedCustomization?.brandTextColor) ? storedCustomization.brandTextColor : defaults.brandTextColor;
     const brandIconColor = isHexColor(storedCustomization?.brandIconColor) ? storedCustomization.brandIconColor : defaults.brandIconColor;
+    const timezoneMenuBackground = isHexColor(storedCustomization?.timezoneMenuBackground) ? storedCustomization.timezoneMenuBackground : defaults.timezoneMenuBackground;
+    const timezoneMenuText = isHexColor(storedCustomization?.timezoneMenuText) ? storedCustomization.timezoneMenuText : defaults.timezoneMenuText;
+    const timezoneMenuHighlight = isHexColor(storedCustomization?.timezoneMenuHighlight) ? storedCustomization.timezoneMenuHighlight : defaults.timezoneMenuHighlight;
     const clockLabelColor = isHexColor(storedCustomization?.clockLabelColor) ? storedCustomization.clockLabelColor : defaults.clockLabelColor;
     const clockTimeColor = isHexColor(storedCustomization?.clockTimeColor) ? storedCustomization.clockTimeColor : defaults.clockTimeColor;
 
@@ -95,6 +101,9 @@
     document.documentElement.style.setProperty("--bg-solid", gradient.mid);
     document.documentElement.style.setProperty("--panel-bg", withAlpha(panelColor, isDarkTheme ? 0.34 : 0.82));
     document.documentElement.style.setProperty("--panel-border", isDarkTheme ? withAlpha(defaults.panelLight, 0.14) : withAlpha(defaults.panelDark, 0.15));
+    document.documentElement.style.setProperty("--timezone-menu-bg", withAlpha(timezoneMenuBackground, isDarkTheme ? 0.92 : 0.96));
+    document.documentElement.style.setProperty("--timezone-menu-text", timezoneMenuText);
+    document.documentElement.style.setProperty("--timezone-menu-highlight", withAlpha(timezoneMenuHighlight, isDarkTheme ? 0.4 : 0.72));
     document.documentElement.style.setProperty("--brand-text", brandTextColor);
     document.documentElement.style.setProperty("--brand-icon", brandIconColor);
     document.documentElement.style.setProperty("--date-color", isDarkTheme ? "#ffffff" : "#000000");
