@@ -483,12 +483,12 @@ function updateBatteryDisplay(snapshot) {
   percent.textContent = `${level}%`;
   if (snapshot.charging) {
     leftFill.style.background = activeCustomization.chargingActiveColor;
-    bolt.style.display = "flex";
+    bolt.style.display = activeCustomization.chargingIcon ? "flex" : "none";
     percent.style.color = activeCustomization.percentLinkedToLevel ? batteryColor : activeCustomization.percentChargingColor;
     percent.classList.remove("low-battery-alert");
   } else {
     leftFill.style.background = activeCustomization.chargingIdleColor;
-    bolt.style.display = activeCustomization.chargingIcon ? "flex" : "none";
+    bolt.style.display = "none";
     percent.style.color = activeCustomization.percentLinkedToLevel ? batteryColor : activeCustomization.percentColor;
     percent.classList.toggle("low-battery-alert", level < activeCustomization.criticalThreshold);
   }
