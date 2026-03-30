@@ -153,14 +153,6 @@ function buildGradientStops(baseColor, accentColor, isDarkTheme) {
   };
 }
 
-function buildLogoFilter(logoColor) {
-  const { r, g, b } = hexToRgb(logoColor);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  const invert = brightness < 128 ? 100 : 0;
-
-  return `brightness(0) saturate(100%) invert(${invert}%) sepia(100%) saturate(2400%) drop-shadow(0 0 0 ${logoColor})`;
-}
-
 function applyPalette(palette) {
   const resolvedPalette = {
     background: palette?.background || DEFAULT_PALETTE.background,
@@ -178,16 +170,7 @@ function applyPalette(palette) {
   document.documentElement.style.setProperty("--bg-solid", gradientStops.mid);
   document.documentElement.style.setProperty("--accent-main", resolvedPalette.accent);
   document.documentElement.style.setProperty("--accent-soft", withAlpha(resolvedPalette.accent, 0.24));
-  document.documentElement.style.setProperty(
-    "--theme-thumb-light",
-    `linear-gradient(135deg, ${rgbToHex(mixColors(resolvedPalette.accent, "#fde047", 0.35))}, ${resolvedPalette.accent})`
-  );
-  document.documentElement.style.setProperty(
-    "--theme-thumb-dark",
-    `linear-gradient(135deg, ${resolvedPalette.accent}, ${rgbToHex(mixColors(resolvedPalette.background, "#020617", 0.78))})`
-  );
   document.documentElement.style.setProperty("--brand-shadow", `drop-shadow(0 0 18px ${withAlpha(resolvedPalette.logo, 0.45)})`);
-  document.documentElement.style.setProperty("--brand-logo-filter", buildLogoFilter(resolvedPalette.logo));
   document.documentElement.style.setProperty("--hint-color", withAlpha(resolvedPalette.accent, isDarkTheme ? 0.62 : 0.95));
   document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(resolvedPalette.accent, isDarkTheme ? 0.42 : 0.3)}`);
 

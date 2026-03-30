@@ -36,14 +36,6 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  function buildLogoFilter(logoColor) {
-    const { r, g, b } = hexToRgb(logoColor);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    const invert = brightness < 128 ? 100 : 0;
-
-    return `brightness(0) saturate(100%) invert(${invert}%) sepia(100%) saturate(2400%) drop-shadow(0 0 0 ${logoColor})`;
-  }
-
   try {
     const storedTheme = localStorage.getItem(storageKey);
     const storedPalette = JSON.parse(localStorage.getItem(paletteStorageKey) || "null");
@@ -79,16 +71,7 @@
       document.documentElement.style.setProperty("--bg-solid", mid);
       document.documentElement.style.setProperty("--accent-main", storedPalette.accent);
       document.documentElement.style.setProperty("--accent-soft", withAlpha(storedPalette.accent, 0.24));
-      document.documentElement.style.setProperty(
-        "--theme-thumb-light",
-        `linear-gradient(135deg, ${rgbToHex(mixColors(storedPalette.accent, "#fde047", 0.35))}, ${storedPalette.accent})`
-      );
-      document.documentElement.style.setProperty(
-        "--theme-thumb-dark",
-        `linear-gradient(135deg, ${storedPalette.accent}, ${rgbToHex(mixColors(storedPalette.background, "#020617", 0.78))})`
-      );
       document.documentElement.style.setProperty("--brand-shadow", `drop-shadow(0 0 18px ${withAlpha(storedPalette.logo, 0.45)})`);
-      document.documentElement.style.setProperty("--brand-logo-filter", buildLogoFilter(storedPalette.logo));
       document.documentElement.style.setProperty("--hint-color", withAlpha(storedPalette.accent, isDarkTheme ? 0.62 : 0.95));
       document.documentElement.style.setProperty("--clock-glow", `0 0 16px ${withAlpha(storedPalette.accent, isDarkTheme ? 0.42 : 0.3)}`);
     }
