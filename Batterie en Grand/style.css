@@ -819,7 +819,9 @@ html.theme-dark .theme-switch-thumb {
 
 .palette-field input[type="text"],
 .palette-field input[type="number"],
-.palette-field input[type="time"] {
+.palette-field input[type="time"],
+.palette-field input[type="date"],
+.palette-select {
   width: 150px;
   padding: 9px 12px;
   border: 1px solid var(--control-border);
@@ -830,8 +832,28 @@ html.theme-dark .theme-switch-thumb {
   box-sizing: border-box;
 }
 
-.palette-inline-button {
+.palette-select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  text-align: center;
+}
+
+.palette-field-reset {
   width: 100%;
+  min-height: 34px;
+  margin-top: -4px;
+  border: 1px solid var(--control-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--control-text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.palette-field-reset.is-hidden {
+  display: none;
 }
 
 .hint-button {

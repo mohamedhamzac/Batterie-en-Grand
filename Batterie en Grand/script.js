@@ -2,19 +2,160 @@
 const THEME_STORAGE_KEY = "batterie-en-grand-theme";
 const TIMEZONE_STORAGE_KEY = "batterie-en-grand-timezone";
 const CUSTOMIZATION_STORAGE_KEY = "batterie-en-grand-customization";
+const LANGUAGE_STORAGE_KEY = "batterie-en-grand-language";
 const WORLD_TIME_ZONE = "UTC";
 const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
 const CURSOR_HIDE_DELAY_MS = 2500;
 const HISTORY_LIMIT = 100;
 const CRITICAL_WARNING_TAIL_MS = 10000;
-const WARNING_MESSAGES = ["SEUIL CRITIQUE", "BATTERIE FAIBLE", "RECHARGEZ L'APPAREIL", "ATTENTION"];
-const WEEKDAY_NAMES = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-const MONTH_NAMES = ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"];
+const DEFAULT_LANGUAGE = "fr";
+const LANGUAGE_CATALOG = [
+  "af","am","ar","as","az","be","bg","bn","bo","bs","ca","cs","cy","da","de","el","en","eo","es","et","eu","fa","fi","fil","fj","fo","fr","ga","gd","gl","gu","ha","he","hi","hr","hu","hy","id","is","it","ja","jv","ka","kk","km","kn","ko","ku","ky","la","lb","lo","lt","lv","mg","mi","mk","ml","mn","mr","ms","mt","my","nb","ne","nl","nn","no","oc","or","pa","pl","ps","pt","qu","ro","ru","sa","sd","si","sk","sl","sm","so","sq","sr","sv","sw","ta","te","tg","th","ti","tk","to","tr","tt","ug","uk","ur","uz","vi","xh","yi","yo","zh","zu",
+  "en-US","en-GB","fr-FR","fr-CA","es-ES","es-MX","pt-BR","pt-PT","zh-CN","zh-TW","zh-HK","ar-SA","de-DE","it-IT","ja-JP","ko-KR","ru-RU","hi-IN","nl-NL","sv-SE","pl-PL","tr-TR","uk-UA","cs-CZ","ro-RO","hu-HU","fi-FI","da-DK","el-GR","he-IL","id-ID","ms-MY","th-TH","vi-VN"
+];
+const LOCALES = {
+  fr: {
+    weekdayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
+    monthNames: ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"],
+    warningMessages: ["SEUIL CRITIQUE", "BATTERIE FAIBLE", "RECHARGEZ L'APPAREIL", "ATTENTION"],
+    criticalVoiceMessage: "Attention vous avez atteint le seuil critique de la batterie, nous vous prions de bien vouloir recharger votre appareil",
+    fullscreenEnter: "Cliquer pour plein écran",
+    fullscreenExit: "Quitter le plein écran",
+    worldClockLabel: "HEURE MONDIALE - UTC",
+    currentClockLabel: "HEURE ACTUELLE - {zone}",
+    timezoneSearchPlaceholder: "Rechercher un pays ou un UTC",
+    timezoneSearchAria: "Rechercher un fuseau horaire",
+    timezoneResultsAria: "Fuseaux horaires",
+    timezoneEmpty: "Aucun fuseau trouve",
+    paletteOpenAria: "Ouvrir la palette de couleurs",
+    themeGroupAria: "Choix du theme",
+    themeLightAria: "Activer le mode clair",
+    themeDarkAria: "Activer le mode sombre",
+    undoAria: "Annuler une modification",
+    redoAria: "Retablir une modification",
+    resetAll: "Reinitialiser",
+    resetOne: "Reinitialiser ce reglage",
+    sectionLanguage: "Langue",
+    fieldSiteLanguage: "Langue du site",
+    sectionBackground: "Fond",
+    fieldBackgroundLight: "Page claire",
+    fieldBackgroundDark: "Page sombre",
+    fieldPanelLight: "Panneau clair",
+    fieldPanelDark: "Panneau sombre",
+    sectionTimezone: "Menu UTC",
+    fieldTimezoneBg: "Fond",
+    fieldTimezoneText: "Texte",
+    fieldTimezoneHover: "Survol",
+    sectionClock: "Heure",
+    fieldDateColor: "Couleur date",
+    fieldClockLabelColor: "Couleur libelle",
+    fieldClockTimeColor: "Couleur heure",
+    fieldManualDate: "Date manuelle",
+    fieldManualTime: "Heure manuelle",
+    sectionDisplayTexts: "Textes affichage",
+    fieldLogoTextColor: "Logo texte",
+    fieldLogoIconColor: "Logo icone",
+    fieldPercentIdle: "Pourcentage repos",
+    fieldPercentCharge: "Pourcentage charge",
+    fieldLinkToLevel: "Lier au niveau",
+    fieldLinkInCharge: "Lier en charge",
+    sectionTopLogo: "Logo du haut",
+    fieldText: "Texte",
+    fieldIcon: "Icone",
+    brandIconPlaceholder: "Emoji, texte ou lien d'image",
+    sectionBattery: "Batterie",
+    fieldChargeIndicator: "Indicateur en charge",
+    fieldIdleIndicator: "Indicateur au repos",
+    fieldChargeTextColor: "Texte de charge",
+    fieldBatteryShell: "Contour batterie droite",
+    fieldChargeGlyph: "Texte/emoji/icone de charge",
+    criticalThreshold: "Seuil critique",
+    thresholdPlaceholder: "Vide pour desactiver",
+    thresholdLowLabel: "{value}% et +",
+    thresholdCriticalLabel: "Moins de {value}%",
+    thresholdDisabledLowLabel: "Moins de 35%",
+    thresholdDisabledCriticalLabel: "Critique desactive",
+    percentage80: "80% et +",
+    percentage50: "50% et +",
+    percentage35: "35% et +",
+    manualDateAria: "Modifier la date affichee",
+    manualTimeAria: "Modifier l'heure affichee",
+    languageAria: "Choisir la langue du site"
+  },
+  en: {
+    weekdayNames: ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+    monthNames: ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"],
+    warningMessages: ["CRITICAL LEVEL", "LOW BATTERY", "PLEASE RECHARGE", "WARNING"],
+    criticalVoiceMessage: "Warning, you have reached the critical battery level, please recharge your device",
+    fullscreenEnter: "Click for fullscreen",
+    fullscreenExit: "Exit fullscreen",
+    worldClockLabel: "WORLD TIME - UTC",
+    currentClockLabel: "CURRENT TIME - {zone}",
+    timezoneSearchPlaceholder: "Search a country or UTC",
+    timezoneSearchAria: "Search a time zone",
+    timezoneResultsAria: "Time zones",
+    timezoneEmpty: "No time zone found",
+    paletteOpenAria: "Open the color palette",
+    themeGroupAria: "Theme selection",
+    themeLightAria: "Enable light mode",
+    themeDarkAria: "Enable dark mode",
+    undoAria: "Undo a change",
+    redoAria: "Redo a change",
+    resetAll: "Reset all",
+    resetOne: "Reset this setting",
+    sectionLanguage: "Language",
+    fieldSiteLanguage: "Site language",
+    sectionBackground: "Background",
+    fieldBackgroundLight: "Light page",
+    fieldBackgroundDark: "Dark page",
+    fieldPanelLight: "Light panel",
+    fieldPanelDark: "Dark panel",
+    sectionTimezone: "UTC menu",
+    fieldTimezoneBg: "Background",
+    fieldTimezoneText: "Text",
+    fieldTimezoneHover: "Hover",
+    sectionClock: "Clock",
+    fieldDateColor: "Date color",
+    fieldClockLabelColor: "Label color",
+    fieldClockTimeColor: "Time color",
+    fieldManualDate: "Manual date",
+    fieldManualTime: "Manual time",
+    sectionDisplayTexts: "Display text",
+    fieldLogoTextColor: "Logo text",
+    fieldLogoIconColor: "Logo icon",
+    fieldPercentIdle: "Idle percentage",
+    fieldPercentCharge: "Charging percentage",
+    fieldLinkToLevel: "Link to level",
+    fieldLinkInCharge: "Link while charging",
+    sectionTopLogo: "Top logo",
+    fieldText: "Text",
+    fieldIcon: "Icon",
+    brandIconPlaceholder: "Emoji, text or image link",
+    sectionBattery: "Battery",
+    fieldChargeIndicator: "Charging indicator",
+    fieldIdleIndicator: "Idle indicator",
+    fieldChargeTextColor: "Charging text color",
+    fieldBatteryShell: "Right battery outline",
+    fieldChargeGlyph: "Charging text/emoji/icon",
+    criticalThreshold: "Critical threshold",
+    thresholdPlaceholder: "Leave empty to disable",
+    thresholdLowLabel: "{value}% and up",
+    thresholdCriticalLabel: "Below {value}%",
+    thresholdDisabledLowLabel: "Below 35%",
+    thresholdDisabledCriticalLabel: "Critical disabled",
+    percentage80: "80% and up",
+    percentage50: "50% and up",
+    percentage35: "35% and up",
+    manualDateAria: "Change the displayed date",
+    manualTimeAria: "Change the displayed time",
+    languageAria: "Choose the site language"
+  }
+};
 const DEFAULT_CUSTOMIZATION = Object.freeze({
   backgroundLight: "#dbeafe", backgroundDark: "#020617", panelLight: "#ffffff", panelDark: "#0f172a",
   timezoneMenuBackground: "#ffffff", timezoneMenuText: "#0f172a", timezoneMenuHighlight: "#dbeafe",
   dateColor: "#2563eb", clockLabelColor: "#1d4ed8", clockTimeColor: "#0f172a",
-  manualTime: "", brandTextColor: "#0f172a", brandIconColor: "#0f172a",
+  manualDate: "", manualTime: "", brandTextColor: "#0f172a", brandIconColor: "#0f172a",
   percentColor: "#0f172a", percentChargingColor: "#22c55e", percentLinkedToLevel: true, percentChargingLinkedToIndicator: false, brandText: "Batterie en Grand", brandIcon: "",
   chargingActiveColor: "#22c55e", chargingIdleColor: "#9ca3af", chargingTextColor: "#ffffff", batteryShellColor: "#0f172a", chargingIcon: "⚡",
   levelHighColor: "#22c55e", levelMediumColor: "#facc15", levelWarningColor: "#fb923c", levelLowColor: "#dc2626", levelCriticalColor: "#7f1d1d", criticalThreshold: 15
@@ -33,7 +174,7 @@ const palettePanel = ids("palettePanel");
 const undoButton = ids("undoButton");
 const redoButton = ids("redoButton");
 const resetPaletteButton = ids("resetPaletteButton");
-const resetManualTimeButton = ids("resetManualTimeButton");
+const languageSelect = ids("languageSelect");
 const percentLinkedToLevelInput = ids("percentLinkedToLevelInput");
 const percentChargingLinkedToIndicatorInput = ids("percentChargingLinkedToIndicatorInput");
 const timezoneToggle = ids("timezoneToggle");
@@ -56,7 +197,7 @@ const levelLowColorLabel = ids("levelLowColorLabel");
 const levelCriticalColorLabel = ids("levelCriticalColorLabel");
 
 const inputNames = [
-  "backgroundLightInput","backgroundDarkInput","panelLightInput","panelDarkInput","timezoneMenuBackgroundInput","timezoneMenuTextInput","timezoneMenuHighlightInput","dateColorInput","clockLabelColorInput","clockTimeColorInput","manualTimeInput","brandTextColorInput","brandIconColorInput","percentColorInput","percentChargingColorInput","brandTextInput","brandIconInput","chargingActiveColorInput","chargingIdleColorInput","chargingTextColorInput","batteryShellColorInput","chargingIconInput","levelHighColorInput","levelMediumColorInput","levelWarningColorInput","levelLowColorInput","levelCriticalColorInput","criticalThresholdInput"
+  "backgroundLightInput","backgroundDarkInput","panelLightInput","panelDarkInput","timezoneMenuBackgroundInput","timezoneMenuTextInput","timezoneMenuHighlightInput","dateColorInput","clockLabelColorInput","clockTimeColorInput","manualDateInput","manualTimeInput","brandTextColorInput","brandIconColorInput","percentColorInput","percentChargingColorInput","brandTextInput","brandIconInput","chargingActiveColorInput","chargingIdleColorInput","chargingTextColorInput","batteryShellColorInput","chargingIconInput","levelHighColorInput","levelMediumColorInput","levelWarningColorInput","levelLowColorInput","levelCriticalColorInput","criticalThresholdInput"
 ];
 const inputs = Object.fromEntries(inputNames.map(name => [name, ids(name)]));
 
@@ -87,11 +228,46 @@ function getStoredTheme() { try { const t = localStorage.getItem(THEME_STORAGE_K
 function saveTheme(theme) { try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch {} }
 function getSystemTheme() { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }
 function getPreferredTheme() { return getStoredTheme() || getSystemTheme(); }
+function normalizeLanguageTag(lang) {
+  if (!lang) return "";
+  try { return Intl.getCanonicalLocales(lang)[0] || ""; } catch { return String(lang).trim(); }
+}
+function getBaseLanguage(lang) { return normalizeLanguageTag(lang).split("-")[0] || DEFAULT_LANGUAGE; }
+function getTranslationLanguage(lang = activeLanguage) {
+  const base = getBaseLanguage(lang);
+  return LOCALES[lang] ? lang : (LOCALES[base] ? base : "en");
+}
+function getDisplayLanguageTag(lang = activeLanguage) {
+  const normalized = normalizeLanguageTag(lang);
+  return normalized || DEFAULT_LANGUAGE;
+}
+function detectPreferredLanguage() {
+  const candidates = [...new Set([...(navigator.languages || []), navigator.language, DEFAULT_LANGUAGE].filter(Boolean).map(normalizeLanguageTag))];
+  for (const candidate of candidates) {
+    if (LANGUAGE_CATALOG.includes(candidate)) return candidate;
+    const base = getBaseLanguage(candidate);
+    if (LANGUAGE_CATALOG.includes(base)) return base;
+  }
+  return DEFAULT_LANGUAGE;
+}
+function getStoredLanguage() {
+  try {
+    const lang = normalizeLanguageTag(localStorage.getItem(LANGUAGE_STORAGE_KEY));
+    if (lang && (LANGUAGE_CATALOG.includes(lang) || LANGUAGE_CATALOG.includes(getBaseLanguage(lang)))) return lang;
+  } catch {}
+  return detectPreferredLanguage();
+}
+function saveLanguage(lang) { try { localStorage.setItem(LANGUAGE_STORAGE_KEY, normalizeLanguageTag(lang)); } catch {} }
 function saveTimezone(zone) { try { localStorage.setItem(TIMEZONE_STORAGE_KEY, zone); } catch {} }
 function getStoredTimezone() { try { return localStorage.getItem(TIMEZONE_STORAGE_KEY); } catch { return null; } }
 function cloneCustomization(c) { return JSON.parse(JSON.stringify(c)); }
 function areCustomizationsEqual(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 function hasOwn(source, key) { return Object.prototype.hasOwnProperty.call(source || {}, key); }
+function t(key, replacements = {}) {
+  let value = (LOCALES[getTranslationLanguage()] || LOCALES[DEFAULT_LANGUAGE])[key] || key;
+  Object.entries(replacements).forEach(([name, replacement]) => { value = value.replaceAll(`{${name}}`, replacement); });
+  return value;
+}
 function sanitizeOptionalText(v, max = 80) { return typeof v === "string" ? v.trim().slice(0, max) : ""; }
 function sanitizeRequiredText(v, fallback, max = 80) { return sanitizeOptionalText(v, max) || fallback; }
 function sanitizeThreshold(v) {
@@ -106,19 +282,48 @@ function resolveBrandIconMode(value) {
   return isImageLink(value) ? "image" : "glyph";
 }
 function getCriticalThresholdValue() { return typeof activeCustomization.criticalThreshold === "number" ? activeCustomization.criticalThreshold : null; }
+function getLanguageDisplayName(languageCode) {
+  const displayLocale = getDisplayLanguageTag();
+  const normalized = normalizeLanguageTag(languageCode);
+  try {
+    const displayNames = new Intl.DisplayNames([displayLocale], { type: "language" });
+    return displayNames.of(normalized) || normalized;
+  } catch {
+    return normalized;
+  }
+}
+function populateLanguageOptions() {
+  const selected = normalizeLanguageTag(activeLanguage);
+  const options = [...new Set(LANGUAGE_CATALOG.map(normalizeLanguageTag).filter(Boolean))]
+    .sort((a, b) => getLanguageDisplayName(a).localeCompare(getLanguageDisplayName(b), getDisplayLanguageTag(), { sensitivity: "base" }));
+  languageSelect.innerHTML = "";
+  options.forEach(languageCode => {
+    const option = document.createElement("option");
+    option.value = languageCode;
+    option.textContent = getLanguageDisplayName(languageCode);
+    languageSelect.appendChild(option);
+  });
+  if (![...languageSelect.options].some(option => option.value === selected)) {
+    const option = document.createElement("option");
+    option.value = selected;
+    option.textContent = getLanguageDisplayName(selected);
+    languageSelect.appendChild(option);
+  }
+  languageSelect.value = selected;
+}
 function pickPreferredMaleVoice() {
   const voices = "speechSynthesis" in window ? window.speechSynthesis.getVoices() : [];
   if (!voices.length) return null;
 
-  const frenchVoices = voices.filter(voice => /^fr\b/i.test(voice.lang || ""));
-  const preferredPool = frenchVoices.length ? frenchVoices : voices;
+  const matchingVoices = voices.filter(voice => new RegExp(`^${getBaseLanguage(activeLanguage)}\\b`, "i").test(voice.lang || ""));
+  const preferredPool = matchingVoices.length ? matchingVoices : voices;
   const maleHints = ["male", "man", "homme", "thomas", "thom", "alain", "gabriel", "paul", "remy", "nicolas", "antoine", "xavier", "henri", "jean", "luc", "yves"];
   return preferredPool.find(voice => maleHints.some(hint => (voice.name || "").toLowerCase().includes(hint))) || preferredPool[0] || null;
 }
 function getActiveFullscreenElement() {
   return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
 }
-function updateFullscreenHint() { fullscreenHint.textContent = getActiveFullscreenElement() ? "Quitter le plein écran" : "Cliquer pour plein écran"; }
+function updateFullscreenHint() { fullscreenHint.textContent = getActiveFullscreenElement() ? t("fullscreenExit") : t("fullscreenEnter"); }
 function toggleFullscreen() {
   removeHashFromUrl();
 
@@ -172,8 +377,10 @@ function applyDeviceLayout() { const t = detectDeviceType(); document.body.datas
 function setBatteryAvailability(hasBattery) { document.body.classList.toggle("no-battery", !hasBattery); }
 function getCurrentReferenceDate() { return syncedUtcMs !== null ? new Date(syncedUtcMs + (performance.now() - syncedAtPerfMs)) : new Date(); }
 function parseManualTime(v) { const m = (v || "").match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/); return m ? { hour: clamp(+m[1], 0, 23), minute: clamp(+m[2], 0, 59), second: clamp(+(m[3] || 0), 0, 59) } : null; }
+function parseManualDate(v) { const m = (v || "").match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? { year: +m[1], month: clamp(+m[2], 1, 12), day: clamp(+m[3], 1, 31) } : null; }
 function formatHms(parts) { const p = n => String(n).padStart(2, "0"); return `${p(parts.hour)}:${p(parts.minute)}:${p(parts.second)}`; }
 function sanitizeManualTime(v) { const parts = parseManualTime(v); return parts ? formatHms(parts) : ""; }
+function sanitizeManualDate(v) { const parts = parseManualDate(v); return parts ? `${String(parts.year).padStart(4, "0")}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}` : ""; }
 function getPartsPseudoUtcMs(parts) { return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second); }
 function getPseudoUtcMsParts(ms) {
   const date = new Date(ms);
@@ -314,8 +521,9 @@ const timezones = [
   { name: "Zambie", zone: "Africa/Lusaka" },
   { name: "Zimbabwe", zone: "Africa/Harare" }
 ];
-function getZoneDisplayName(zone) { return timezones.find(item => item.zone === zone)?.name || "Heure mondiale (UTC)"; }
+function getZoneDisplayName(zone) { if (zone === WORLD_TIME_ZONE) return getTranslationLanguage() === "en" ? "World Time (UTC)" : "Heure mondiale (UTC)"; return timezones.find(item => item.zone === zone)?.name || zone; }
 let activeZone = timezones.some(z => z.zone === getStoredTimezone()) ? getStoredTimezone() : WORLD_TIME_ZONE;
+let activeLanguage = getStoredLanguage();
 let activeCustomization = getStoredCustomization();
 function sanitizeCustomization(source) {
   source = source || {};
@@ -330,6 +538,7 @@ function sanitizeCustomization(source) {
     dateColor: isHexColor(source.dateColor) ? source.dateColor : DEFAULT_CUSTOMIZATION.dateColor,
     clockLabelColor: isHexColor(source.clockLabelColor) ? source.clockLabelColor : DEFAULT_CUSTOMIZATION.clockLabelColor,
     clockTimeColor: isHexColor(source.clockTimeColor) ? source.clockTimeColor : DEFAULT_CUSTOMIZATION.clockTimeColor,
+    manualDate: sanitizeManualDate(source.manualDate),
     manualTime: sanitizeManualTime(source.manualTime),
     brandTextColor: isHexColor(source.brandTextColor) ? source.brandTextColor : DEFAULT_CUSTOMIZATION.brandTextColor,
     brandIconColor: isHexColor(source.brandIconColor) ? source.brandIconColor : DEFAULT_CUSTOMIZATION.brandIconColor,
@@ -366,8 +575,115 @@ function updatePercentColorInputState(linkedToLevel, linkedToIndicator) {
     inputs.percentChargingColorInput.closest(".palette-field")?.classList.toggle("is-disabled", linkedToIndicator);
   }
 }
-function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: c.criticalThreshold === null ? "" : String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); percentLinkedToLevelInput.checked = c.percentLinkedToLevel; percentChargingLinkedToIndicatorInput.checked = c.percentChargingLinkedToIndicator; updatePercentColorInputState(c.percentLinkedToLevel, c.percentChargingLinkedToIndicator); }
-function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.timezoneMenuBackground = inputs.timezoneMenuBackgroundInput.value; raw.timezoneMenuText = inputs.timezoneMenuTextInput.value; raw.timezoneMenuHighlight = inputs.timezoneMenuHighlightInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.percentLinkedToLevel = percentLinkedToLevelInput.checked; raw.percentChargingLinkedToIndicator = percentChargingLinkedToIndicatorInput.checked; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
+function getCustomizationKeyFromControlId(id) { return id?.endsWith("Input") ? id.replace(/Input$/, "") : null; }
+function isFieldAtDefault(controlId) {
+  if (controlId === "languageSelect") return normalizeLanguageTag(activeLanguage) === normalizeLanguageTag(detectPreferredLanguage());
+  if (controlId === "percentLinkedToLevelInput") return activeCustomization.percentLinkedToLevel === DEFAULT_CUSTOMIZATION.percentLinkedToLevel;
+  if (controlId === "percentChargingLinkedToIndicatorInput") return activeCustomization.percentChargingLinkedToIndicator === DEFAULT_CUSTOMIZATION.percentChargingLinkedToIndicator;
+  const key = getCustomizationKeyFromControlId(controlId);
+  return key ? JSON.stringify(activeCustomization[key]) === JSON.stringify(DEFAULT_CUSTOMIZATION[key]) : true;
+}
+function resetFieldByControlId(controlId) {
+  if (controlId === "languageSelect") return setLanguage(detectPreferredLanguage());
+  const key = getCustomizationKeyFromControlId(controlId);
+  if (!key) return;
+  commitCustomization({ ...activeCustomization, [key]: cloneCustomization(DEFAULT_CUSTOMIZATION[key]) });
+}
+function updateFieldResetButtons() {
+  palettePanel.querySelectorAll(".palette-field-reset").forEach(button => {
+    button.textContent = t("resetOne");
+    button.classList.toggle("is-hidden", isFieldAtDefault(button.dataset.targetId));
+  });
+}
+function createFieldResetButtons() {
+  const controls = new Set();
+  palettePanel.querySelectorAll(".palette-field").forEach(field => {
+    const control = field.querySelector("input, select");
+    if (!control?.id || controls.has(control.id)) return;
+    controls.add(control.id);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "palette-field-reset";
+    button.dataset.targetId = control.id;
+    button.addEventListener("click", () => resetFieldByControlId(control.id));
+    field.insertAdjacentElement("afterend", button);
+  });
+  updateFieldResetButtons();
+}
+function setFieldLabel(controlId, text) {
+  const label = document.getElementById(controlId)?.closest(".palette-field");
+  const span = label?.querySelector("span");
+  if (span) span.textContent = text;
+}
+function updatePaletteLanguage() {
+  populateLanguageOptions();
+  const sectionTitles = [...palettePanel.querySelectorAll(".palette-section-title")];
+  if (sectionTitles[0]) sectionTitles[0].textContent = t("sectionLanguage");
+  if (sectionTitles[1]) sectionTitles[1].textContent = t("sectionBackground");
+  if (sectionTitles[2]) sectionTitles[2].textContent = t("sectionTimezone");
+  if (sectionTitles[3]) sectionTitles[3].textContent = t("sectionClock");
+  if (sectionTitles[4]) sectionTitles[4].textContent = t("sectionDisplayTexts");
+  if (sectionTitles[5]) sectionTitles[5].textContent = t("sectionTopLogo");
+  if (sectionTitles[6]) sectionTitles[6].textContent = t("sectionBattery");
+
+  setFieldLabel("languageSelect", t("fieldSiteLanguage"));
+  setFieldLabel("backgroundLightInput", t("fieldBackgroundLight"));
+  setFieldLabel("backgroundDarkInput", t("fieldBackgroundDark"));
+  setFieldLabel("panelLightInput", t("fieldPanelLight"));
+  setFieldLabel("panelDarkInput", t("fieldPanelDark"));
+  setFieldLabel("timezoneMenuBackgroundInput", t("fieldTimezoneBg"));
+  setFieldLabel("timezoneMenuTextInput", t("fieldTimezoneText"));
+  setFieldLabel("timezoneMenuHighlightInput", t("fieldTimezoneHover"));
+  setFieldLabel("dateColorInput", t("fieldDateColor"));
+  setFieldLabel("clockLabelColorInput", t("fieldClockLabelColor"));
+  setFieldLabel("clockTimeColorInput", t("fieldClockTimeColor"));
+  setFieldLabel("manualDateInput", t("fieldManualDate"));
+  setFieldLabel("manualTimeInput", t("fieldManualTime"));
+  setFieldLabel("brandTextColorInput", t("fieldLogoTextColor"));
+  setFieldLabel("brandIconColorInput", t("fieldLogoIconColor"));
+  setFieldLabel("percentColorInput", t("fieldPercentIdle"));
+  setFieldLabel("percentChargingColorInput", t("fieldPercentCharge"));
+  setFieldLabel("percentLinkedToLevelInput", t("fieldLinkToLevel"));
+  setFieldLabel("percentChargingLinkedToIndicatorInput", t("fieldLinkInCharge"));
+  setFieldLabel("brandTextInput", t("fieldText"));
+  setFieldLabel("brandIconInput", t("fieldIcon"));
+  setFieldLabel("chargingActiveColorInput", t("fieldChargeIndicator"));
+  setFieldLabel("chargingIdleColorInput", t("fieldIdleIndicator"));
+  setFieldLabel("chargingTextColorInput", t("fieldChargeTextColor"));
+  setFieldLabel("batteryShellColorInput", t("fieldBatteryShell"));
+  setFieldLabel("chargingIconInput", t("fieldChargeGlyph"));
+  setFieldLabel("levelHighColorInput", t("percentage80"));
+  setFieldLabel("levelMediumColorInput", t("percentage50"));
+  setFieldLabel("levelWarningColorInput", t("percentage35"));
+  setFieldLabel("criticalThresholdInput", t("criticalThreshold"));
+
+  timezoneSearchInput.placeholder = t("timezoneSearchPlaceholder");
+  timezoneSearchInput.setAttribute("aria-label", t("timezoneSearchAria"));
+  timezoneResults.setAttribute("aria-label", t("timezoneResultsAria"));
+  paletteButton.setAttribute("aria-label", t("paletteOpenAria"));
+  themeSwitch.setAttribute("aria-label", t("themeGroupAria"));
+  themeLightButton.setAttribute("aria-label", t("themeLightAria"));
+  themeDarkButton.setAttribute("aria-label", t("themeDarkAria"));
+  undoButton.setAttribute("aria-label", t("undoAria"));
+  redoButton.setAttribute("aria-label", t("redoAria"));
+  resetPaletteButton.textContent = t("resetAll");
+  languageSelect.setAttribute("aria-label", t("languageAria"));
+  inputs.brandIconInput.placeholder = t("brandIconPlaceholder");
+  inputs.criticalThresholdInput.placeholder = t("thresholdPlaceholder");
+  inputs.manualDateInput.setAttribute("aria-label", t("manualDateAria"));
+  inputs.manualTimeInput.setAttribute("aria-label", t("manualTimeAria"));
+  document.documentElement.lang = getDisplayLanguageTag();
+  updateFullscreenHint();
+  renderTimezoneOptions();
+}
+function setLanguage(language) {
+  activeLanguage = normalizeLanguageTag(language) || detectPreferredLanguage();
+  saveLanguage(activeLanguage);
+  languageSelect.value = normalizeLanguageTag(activeLanguage);
+  applyCustomization(activeCustomization, false);
+}
+function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualDateInput: c.manualDate, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: c.criticalThreshold === null ? "" : String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); percentLinkedToLevelInput.checked = c.percentLinkedToLevel; percentChargingLinkedToIndicatorInput.checked = c.percentChargingLinkedToIndicator; updatePercentColorInputState(c.percentLinkedToLevel, c.percentChargingLinkedToIndicator); }
+function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.timezoneMenuBackground = inputs.timezoneMenuBackgroundInput.value; raw.timezoneMenuText = inputs.timezoneMenuTextInput.value; raw.timezoneMenuHighlight = inputs.timezoneMenuHighlightInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualDate = inputs.manualDateInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.percentLinkedToLevel = percentLinkedToLevelInput.checked; raw.percentChargingLinkedToIndicator = percentChargingLinkedToIndicatorInput.checked; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
 function fitTextToBounds(el, max, min) { if (!el) return; el.style.fontSize = `${max}px`; if (!el.textContent.trim()) return; let size = max; while (size > min && (el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight)) { size -= 1; el.style.fontSize = `${size}px`; } }
 function applyTextSizing() { fitTextToBounds(brandLogoGlyph, 34, 8); fitTextToBounds(bolt, 36, 9); }
 function buildGradient(theme, c) { return theme === "dark" ? { start: rgbToHex(mixColors(c.backgroundDark, "#0f172a", 0.24)), mid: c.backgroundDark, end: rgbToHex(mixColors(c.backgroundDark, "#000000", 0.7)) } : { start: rgbToHex(mixColors(c.backgroundLight, "#ffffff", 0.42)), mid: c.backgroundLight, end: rgbToHex(mixColors(c.backgroundLight, "#93c5fd", 0.38)) }; }
@@ -429,11 +745,13 @@ function applyCustomization(customization, syncInputs = true) {
     brandMark.classList.add("has-custom-icon");
   }
   bolt.textContent = c.chargingIcon;
-  levelLowColorLabel.textContent = c.criticalThreshold === null ? "Moins de 35%" : `${c.criticalThreshold}% et +`;
-  levelCriticalColorLabel.textContent = c.criticalThreshold === null ? "Critique desactive" : `Moins de ${c.criticalThreshold}%`;
+  levelLowColorLabel.textContent = c.criticalThreshold === null ? t("thresholdDisabledLowLabel") : t("thresholdLowLabel", { value: c.criticalThreshold });
+  levelCriticalColorLabel.textContent = c.criticalThreshold === null ? t("thresholdDisabledCriticalLabel") : t("thresholdCriticalLabel", { value: c.criticalThreshold });
   if (syncInputs) syncInputsWithCustomization(c);
   refreshManualClockOffset();
   updateHistoryButtons();
+  updatePaletteLanguage();
+  updateFieldResetButtons();
   updateClock();
   applyTextSizing();
   if (batterySnapshot) updateBatteryDisplay(batterySnapshot);
@@ -454,21 +772,26 @@ function setTimezoneDropdownOpen(open) {
 function applyTheme(theme) { document.documentElement.classList.toggle("theme-dark", theme === "dark"); themeLightButton.setAttribute("aria-pressed", String(theme !== "dark")); themeDarkButton.setAttribute("aria-pressed", String(theme === "dark")); applyCustomization(activeCustomization); }
 function getZoneDateParts(zone) { const parts = new Intl.DateTimeFormat("en-CA", { timeZone: zone === WORLD_TIME_ZONE ? "UTC" : zone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(getCurrentReferenceDate()); const val = t => parts.find(p => p.type === t)?.value || "00"; return { year: +val("year"), month: +val("month"), day: +val("day"), hour: +val("hour"), minute: +val("minute"), second: +val("second") }; }
 function refreshManualClockOffset() {
-  const manual = parseManualTime(activeCustomization.manualTime);
-  if (!manual) {
+  const manualDate = parseManualDate(activeCustomization.manualDate);
+  const manualTime = parseManualTime(activeCustomization.manualTime);
+  if (!manualDate && !manualTime) {
     manualClockOffsetMs = null;
     return;
   }
 
   const zoneParts = getZoneDateParts(activeZone);
-  manualClockOffsetMs = getPartsPseudoUtcMs({ ...zoneParts, ...manual }) - getPartsPseudoUtcMs(zoneParts);
+  manualClockOffsetMs = getPartsPseudoUtcMs({ ...zoneParts, ...(manualDate || {}), ...(manualTime || {}) }) - getPartsPseudoUtcMs(zoneParts);
 }
 function getDisplayParts() {
   const zoneParts = getZoneDateParts(activeZone);
   return manualClockOffsetMs === null ? zoneParts : getPseudoUtcMsParts(getPartsPseudoUtcMs(zoneParts) + manualClockOffsetMs);
 }
-function formatDateParts(parts) { const weekday = WEEKDAY_NAMES[new Date(Date.UTC(parts.year, parts.month - 1, parts.day)).getUTCDay()]; const label = `${weekday} ${parts.day} ${MONTH_NAMES[parts.month - 1]} ${parts.year}`; return label.charAt(0).toUpperCase() + label.slice(1); }
-function updateClock() { const parts = getDisplayParts(); clockDate.textContent = formatDateParts(parts); clockTime.textContent = formatHms(parts); clockLabel.textContent = activeZone === WORLD_TIME_ZONE ? "HEURE MONDIALE - UTC" : `HEURE ACTUELLE - ${getZoneDisplayName(activeZone).toUpperCase()}`; }
+function formatDateParts(parts) {
+  const label = new Intl.DateTimeFormat([getDisplayLanguageTag(), getTranslationLanguage(), DEFAULT_LANGUAGE], { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
+    .format(new Date(Date.UTC(parts.year, parts.month - 1, parts.day)));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+function updateClock() { const parts = getDisplayParts(); clockDate.textContent = formatDateParts(parts); clockTime.textContent = formatHms(parts); clockLabel.textContent = activeZone === WORLD_TIME_ZONE ? t("worldClockLabel") : t("currentClockLabel", { zone: getZoneDisplayName(activeZone).toUpperCase() }); }
 async function syncTimeFromWorldService() { if (syncRequest) return syncRequest; syncRequest = fetch(WORLD_TIME_API_URL, { cache: "no-store", credentials: "omit", mode: "cors", redirect: "error", referrerPolicy: "no-referrer" }).then(r => r.ok ? r.json() : Promise.reject()).then(data => { const ms = Date.parse(data.utc_datetime || data.datetime); if (!Number.isNaN(ms)) { syncedUtcMs = ms; syncedAtPerfMs = performance.now(); renderTimezoneOptions(); updateClock(); } }).catch(() => { if (syncedUtcMs === null) updateClock(); }).finally(() => { syncRequest = null; }); return syncRequest; }
 function syncClock() { updateClock(); clearTimeout(clockTimerId); clockTimerId = setTimeout(syncClock, 1000 - (Date.now() % 1000)); }
 function getFilteredTimezones() { const q = timezoneSearchQuery.trim().toLowerCase(); return timezones.filter(({ name, zone }) => !q || `${name} ${zone} ${getOffsetLabel(zone)}`.toLowerCase().includes(q)); }
@@ -480,7 +803,7 @@ function renderTimezoneOptions() {
   if (!filteredTimezones.length) {
     const empty = document.createElement("div");
     empty.className = "timezone-empty";
-    empty.textContent = "Aucun fuseau trouvé";
+    empty.textContent = t("timezoneEmpty");
     timezoneResults.appendChild(empty);
     return;
   }
@@ -548,7 +871,8 @@ function placeWarningChip(chip) {
 function spawnCriticalWarning() {
   const chip = document.createElement("div");
   chip.className = "warning-chip";
-  chip.textContent = WARNING_MESSAGES[Math.floor(Math.random() * WARNING_MESSAGES.length)];
+  const warningMessages = (LOCALES[getTranslationLanguage()] || LOCALES[DEFAULT_LANGUAGE]).warningMessages;
+  chip.textContent = warningMessages[Math.floor(Math.random() * warningMessages.length)];
   chip.style.visibility = "hidden";
   chip.style.transform = `rotate(${Math.round(Math.random() * 24 - 12)}deg)`;
   warningOverlay.appendChild(chip);
@@ -565,11 +889,11 @@ function startCriticalWarningVisuals(durationMs) {
   criticalWarningStopTimeoutId = setTimeout(() => { criticalAlertActive = false; if (criticalWarningIntervalId) { clearInterval(criticalWarningIntervalId); criticalWarningIntervalId = null; } }, durationMs + CRITICAL_WARNING_TAIL_MS);
 }
 function announceCriticalBattery() {
-  const message = "Attention vous avez atteint le seuil critique de la batterie, nous vous prions de bien vouloir recharger votre appareil";
+  const message = t("criticalVoiceMessage");
   if (!("speechSynthesis" in window)) return startCriticalWarningVisuals(4500);
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(message);
-  utterance.lang = "fr-FR";
+  utterance.lang = getDisplayLanguageTag();
   utterance.voice = pickPreferredMaleVoice();
   utterance.rate = 0.94;
   utterance.onstart = () => startCriticalWarningVisuals(Math.max(message.length * 70, 5000));
@@ -634,12 +958,12 @@ timezoneResults.addEventListener("click", event => {
 });
 themeLightButton.addEventListener("click", () => { applyTheme("light"); saveTheme("light"); });
 themeDarkButton.addEventListener("click", () => { applyTheme("dark"); saveTheme("dark"); });
+languageSelect.addEventListener("input", event => setLanguage(event.target.value));
 paletteButton.addEventListener("click", () => setPalettePanelOpen(paletteButton.getAttribute("aria-expanded") !== "true"));
 fullscreenHint.addEventListener("click", toggleFullscreen);
 inputNames.forEach(name => inputs[name].addEventListener("input", () => commitCustomization(readCustomizationFromInputs())));
 percentLinkedToLevelInput.addEventListener("input", () => commitCustomization(readCustomizationFromInputs()));
 percentChargingLinkedToIndicatorInput.addEventListener("input", () => commitCustomization(readCustomizationFromInputs()));
-resetManualTimeButton.addEventListener("click", () => commitCustomization({ ...activeCustomization, manualTime: "" }));
 undoButton.addEventListener("click", undoCustomization);
 redoButton.addEventListener("click", redoCustomization);
 resetPaletteButton.addEventListener("click", resetCustomization);
@@ -663,6 +987,8 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () 
 ["mousemove", "mousedown", "pointerdown", "pointermove", "touchstart", "keydown"].forEach(name => document.addEventListener(name, refreshCursorVisibility, { passive: true }));
 
 applyDeviceLayout();
+activeLanguage = getStoredLanguage();
+createFieldResetButtons();
 renderTimezoneOptions();
 applyTheme(getPreferredTheme());
 setPalettePanelOpen(false);

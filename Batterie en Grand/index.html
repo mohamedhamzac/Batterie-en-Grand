@@ -136,6 +136,17 @@
     </div>
 
     <div class="palette-section">
+      <p class="palette-section-title">Langue</p>
+      <label class="palette-field">
+        <span>Langue du site</span>
+        <select id="languageSelect" class="palette-select" aria-label="Choisir la langue du site">
+          <option value="fr">Francais</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="palette-section">
       <p class="palette-section-title">Fond</p>
       <label class="palette-field">
         <span>Page claire</span>
@@ -186,12 +197,13 @@
         <input id="clockTimeColorInput" type="color" value="#0f172a" aria-label="Choisir la couleur de l'heure">
       </label>
       <label class="palette-field palette-field-time">
+        <span>Date manuelle</span>
+        <input id="manualDateInput" type="date" value="" aria-label="Modifier la date affichee">
+      </label>
+      <label class="palette-field palette-field-time">
         <span>Heure manuelle</span>
         <input id="manualTimeInput" type="time" value="" step="1" aria-label="Modifier l'heure affichée">
       </label>
-      <button id="resetManualTimeButton" class="palette-action-button palette-inline-button" type="button">
-        Revenir à l'heure automatique
-      </button>
     </div>
 
     <div class="palette-section">
