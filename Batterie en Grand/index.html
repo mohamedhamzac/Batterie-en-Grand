@@ -3,8 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://worldtimeapi.org; object-src 'none'; media-src 'none'; worker-src 'none'; child-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; block-all-mixed-content">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://worldtimeapi.org; object-src 'none'; media-src 'none'; worker-src 'none'; child-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; block-all-mixed-content">
   <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Vous ne trouvez pas de site web qui peut afficher la date, l'heure, le pourcentage de batterie et entierement costumisable ? Alors cliquez sur ce lien !">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Batterie en Grand">
+  <meta property="og:title" content="Batterie en Grand">
+  <meta property="og:description" content="Vous ne trouvez pas de site web qui peut afficher la date, l'heure, le pourcentage de batterie et entierement costumisable ? Alors cliquez sur ce lien !">
+  <meta property="og:url" content="https://batterie-en-grand.netlify.app/">
+  <meta property="og:image" content="https://batterie-en-grand.netlify.app/logo.svg">
+  <meta property="og:image:alt" content="Icone Batterie en Grand">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Batterie en Grand">
+  <meta name="twitter:description" content="Vous ne trouvez pas de site web qui peut afficher la date, l'heure, le pourcentage de batterie et entierement costumisable ? Alors cliquez sur ce lien !">
+  <meta name="twitter:image" content="https://batterie-en-grand.netlify.app/logo.svg">
+  <meta name="twitter:image:alt" content="Icone Batterie en Grand">
   <title>Batterie en Grand</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="shortcut icon" href="favicon.svg">
@@ -217,7 +230,7 @@
       </label>
       <label class="palette-field palette-field-text">
         <span>Icône</span>
-        <input id="brandIconInput" type="text" value="" maxlength="80" placeholder="Texte ou symbole" aria-label="Modifier l'icône du logo en haut">
+        <input id="brandIconInput" type="text" value="" maxlength="512" placeholder="Emoji, texte ou lien d'image" aria-label="Modifier l'icône du logo en haut avec un emoji, du texte ou un lien d'image">
       </label>
     </div>
 
@@ -240,8 +253,8 @@
         <input id="batteryShellColorInput" type="color" value="#0f172a" aria-label="Choisir la couleur du contour de la batterie droite">
       </label>
       <label class="palette-field palette-field-text">
-        <span>Texte charge</span>
-        <input id="chargingIconInput" type="text" value="⚡" maxlength="80" aria-label="Modifier le texte de charge">
+        <span>Texte/emoji/icône de charge</span>
+        <input id="chargingIconInput" type="text" value="⚡" maxlength="80" aria-label="Modifier le texte, l'emoji ou l'icône de charge">
       </label>
       <label class="palette-field">
         <span>80% et +</span>
@@ -265,7 +278,7 @@
       </label>
       <label class="palette-field palette-field-number">
         <span>Seuil critique</span>
-        <input id="criticalThresholdInput" type="number" value="15" min="1" max="99" aria-label="Seuil critique en pourcentage">
+        <input id="criticalThresholdInput" type="number" value="15" min="1" max="99" placeholder="Vide pour desactiver" aria-label="Seuil critique en pourcentage, laisser vide pour desactiver">
       </label>
     </div>
   </div>

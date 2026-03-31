@@ -6,6 +6,7 @@ const WORLD_TIME_ZONE = "UTC";
 const WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC";
 const CURSOR_HIDE_DELAY_MS = 2500;
 const HISTORY_LIMIT = 100;
+const CRITICAL_WARNING_TAIL_MS = 10000;
 const WARNING_MESSAGES = ["SEUIL CRITIQUE", "BATTERIE FAIBLE", "RECHARGEZ L'APPAREIL", "ATTENTION"];
 const WEEKDAY_NAMES = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 const MONTH_NAMES = ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"];
@@ -47,6 +48,7 @@ const bolt = ids("bolt");
 const rightBubbles = ids("rightBubbles");
 const warningOverlay = ids("warningOverlay");
 const brandMark = document.querySelector(".brand-mark");
+const brandLogoImage = ids("brandLogoImage");
 const brandLogoGlyph = ids("brandLogoGlyph");
 const brandLogoText = ids("brandLogoText");
 const controlsPanel = document.querySelector(".controls-panel");
@@ -64,6 +66,7 @@ let syncedAtPerfMs = 0;
 let clockTimerId = null;
 let cursorHideTimerId = null;
 let batterySnapshot = null;
+let manualClockOffsetMs = null;
 let undoStack = [];
 let redoStack = [];
 let timezoneSearchQuery = "";
@@ -88,8 +91,30 @@ function saveTimezone(zone) { try { localStorage.setItem(TIMEZONE_STORAGE_KEY, z
 function getStoredTimezone() { try { return localStorage.getItem(TIMEZONE_STORAGE_KEY); } catch { return null; } }
 function cloneCustomization(c) { return JSON.parse(JSON.stringify(c)); }
 function areCustomizationsEqual(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+function hasOwn(source, key) { return Object.prototype.hasOwnProperty.call(source || {}, key); }
 function sanitizeOptionalText(v, max = 80) { return typeof v === "string" ? v.trim().slice(0, max) : ""; }
 function sanitizeRequiredText(v, fallback, max = 80) { return sanitizeOptionalText(v, max) || fallback; }
+function sanitizeThreshold(v) {
+  if (v === "" || v === null || typeof v === "undefined") return null;
+  const parsed = parseInt(v, 10);
+  return Number.isNaN(parsed) ? null : clamp(parsed, 1, 99);
+}
+function isImageLink(value) { return /^(https?:\/\/|data:image\/|\.\/|\/|[a-z0-9_\-.]+\/)/i.test(value || ""); }
+function sanitizeBrandIconValue(v) { return typeof v === "string" ? v.trim().slice(0, 512) : ""; }
+function resolveBrandIconMode(value) {
+  if (!value) return "default";
+  return isImageLink(value) ? "image" : "glyph";
+}
+function getCriticalThresholdValue() { return typeof activeCustomization.criticalThreshold === "number" ? activeCustomization.criticalThreshold : null; }
+function pickPreferredMaleVoice() {
+  const voices = "speechSynthesis" in window ? window.speechSynthesis.getVoices() : [];
+  if (!voices.length) return null;
+
+  const frenchVoices = voices.filter(voice => /^fr\b/i.test(voice.lang || ""));
+  const preferredPool = frenchVoices.length ? frenchVoices : voices;
+  const maleHints = ["male", "man", "homme", "thomas", "thom", "alain", "gabriel", "paul", "remy", "nicolas", "antoine", "xavier", "henri", "jean", "luc", "yves"];
+  return preferredPool.find(voice => maleHints.some(hint => (voice.name || "").toLowerCase().includes(hint))) || preferredPool[0] || null;
+}
 function getActiveFullscreenElement() {
   return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
 }
@@ -149,6 +174,11 @@ function getCurrentReferenceDate() { return syncedUtcMs !== null ? new Date(sync
 function parseManualTime(v) { const m = (v || "").match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/); return m ? { hour: clamp(+m[1], 0, 23), minute: clamp(+m[2], 0, 59), second: clamp(+(m[3] || 0), 0, 59) } : null; }
 function formatHms(parts) { const p = n => String(n).padStart(2, "0"); return `${p(parts.hour)}:${p(parts.minute)}:${p(parts.second)}`; }
 function sanitizeManualTime(v) { const parts = parseManualTime(v); return parts ? formatHms(parts) : ""; }
+function getPartsPseudoUtcMs(parts) { return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second); }
+function getPseudoUtcMsParts(ms) {
+  const date = new Date(ms);
+  return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate(), hour: date.getUTCHours(), minute: date.getUTCMinutes(), second: date.getUTCSeconds() };
+}
 function getOffsetLabel(zone) { if (zone === WORLD_TIME_ZONE) return "UTC+0"; const parts = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "shortOffset" }).formatToParts(getCurrentReferenceDate()); return (parts.find(p => p.type === "timeZoneName")?.value || "GMT+0").replace("GMT", "UTC"); }
 const timezones = [
   { name: "Heure mondiale (UTC)", zone: WORLD_TIME_ZONE },
@@ -308,18 +338,18 @@ function sanitizeCustomization(source) {
     percentLinkedToLevel: Boolean(source.percentLinkedToLevel),
     percentChargingLinkedToIndicator: Boolean(source.percentChargingLinkedToIndicator),
     brandText: sanitizeRequiredText(source.brandText, DEFAULT_CUSTOMIZATION.brandText),
-    brandIcon: sanitizeOptionalText(source.brandIcon),
+    brandIcon: sanitizeBrandIconValue(source.brandIcon),
     chargingActiveColor: isHexColor(source.chargingActiveColor) ? source.chargingActiveColor : DEFAULT_CUSTOMIZATION.chargingActiveColor,
     chargingIdleColor: isHexColor(source.chargingIdleColor) ? source.chargingIdleColor : DEFAULT_CUSTOMIZATION.chargingIdleColor,
     chargingTextColor: isHexColor(source.chargingTextColor) ? source.chargingTextColor : DEFAULT_CUSTOMIZATION.chargingTextColor,
     batteryShellColor: isHexColor(source.batteryShellColor) ? source.batteryShellColor : DEFAULT_CUSTOMIZATION.batteryShellColor,
-    chargingIcon: sanitizeRequiredText(source.chargingIcon, DEFAULT_CUSTOMIZATION.chargingIcon),
+    chargingIcon: hasOwn(source, "chargingIcon") ? sanitizeOptionalText(source.chargingIcon) : DEFAULT_CUSTOMIZATION.chargingIcon,
     levelHighColor: isHexColor(source.levelHighColor) ? source.levelHighColor : DEFAULT_CUSTOMIZATION.levelHighColor,
     levelMediumColor: isHexColor(source.levelMediumColor) ? source.levelMediumColor : DEFAULT_CUSTOMIZATION.levelMediumColor,
     levelWarningColor: isHexColor(source.levelWarningColor) ? source.levelWarningColor : DEFAULT_CUSTOMIZATION.levelWarningColor,
     levelLowColor: isHexColor(source.levelLowColor) ? source.levelLowColor : DEFAULT_CUSTOMIZATION.levelLowColor,
     levelCriticalColor: isHexColor(source.levelCriticalColor) ? source.levelCriticalColor : DEFAULT_CUSTOMIZATION.levelCriticalColor,
-    criticalThreshold: clamp(parseInt(source.criticalThreshold, 10) || DEFAULT_CUSTOMIZATION.criticalThreshold, 1, 99)
+    criticalThreshold: hasOwn(source, "criticalThreshold") ? sanitizeThreshold(source.criticalThreshold) : DEFAULT_CUSTOMIZATION.criticalThreshold
   };
 }
 function getStoredCustomization() { try { return sanitizeCustomization(JSON.parse(localStorage.getItem(CUSTOMIZATION_STORAGE_KEY) || "null")); } catch { return cloneCustomization(DEFAULT_CUSTOMIZATION); } }
@@ -336,7 +366,7 @@ function updatePercentColorInputState(linkedToLevel, linkedToIndicator) {
     inputs.percentChargingColorInput.closest(".palette-field")?.classList.toggle("is-disabled", linkedToIndicator);
   }
 }
-function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); percentLinkedToLevelInput.checked = c.percentLinkedToLevel; percentChargingLinkedToIndicatorInput.checked = c.percentChargingLinkedToIndicator; updatePercentColorInputState(c.percentLinkedToLevel, c.percentChargingLinkedToIndicator); }
+function syncInputsWithCustomization(c) { Object.entries({ backgroundLightInput: c.backgroundLight, backgroundDarkInput: c.backgroundDark, panelLightInput: c.panelLight, panelDarkInput: c.panelDark, timezoneMenuBackgroundInput: c.timezoneMenuBackground, timezoneMenuTextInput: c.timezoneMenuText, timezoneMenuHighlightInput: c.timezoneMenuHighlight, dateColorInput: c.dateColor, clockLabelColorInput: c.clockLabelColor, clockTimeColorInput: c.clockTimeColor, manualTimeInput: c.manualTime, brandTextColorInput: c.brandTextColor, brandIconColorInput: c.brandIconColor, percentColorInput: c.percentColor, percentChargingColorInput: c.percentChargingColor, brandTextInput: c.brandText, brandIconInput: c.brandIcon, chargingActiveColorInput: c.chargingActiveColor, chargingIdleColorInput: c.chargingIdleColor, chargingTextColorInput: c.chargingTextColor, batteryShellColorInput: c.batteryShellColor, chargingIconInput: c.chargingIcon, levelHighColorInput: c.levelHighColor, levelMediumColorInput: c.levelMediumColor, levelWarningColorInput: c.levelWarningColor, levelLowColorInput: c.levelLowColor, levelCriticalColorInput: c.levelCriticalColor, criticalThresholdInput: c.criticalThreshold === null ? "" : String(c.criticalThreshold) }).forEach(([key, value]) => { inputs[key].value = value; }); percentLinkedToLevelInput.checked = c.percentLinkedToLevel; percentChargingLinkedToIndicatorInput.checked = c.percentChargingLinkedToIndicator; updatePercentColorInputState(c.percentLinkedToLevel, c.percentChargingLinkedToIndicator); }
 function readCustomizationFromInputs() { const raw = {}; inputNames.forEach(name => raw[name.replace(/Input$/, "")] = inputs[name].value); raw.backgroundLight = inputs.backgroundLightInput.value; raw.backgroundDark = inputs.backgroundDarkInput.value; raw.panelLight = inputs.panelLightInput.value; raw.panelDark = inputs.panelDarkInput.value; raw.timezoneMenuBackground = inputs.timezoneMenuBackgroundInput.value; raw.timezoneMenuText = inputs.timezoneMenuTextInput.value; raw.timezoneMenuHighlight = inputs.timezoneMenuHighlightInput.value; raw.dateColor = inputs.dateColorInput.value; raw.clockLabelColor = inputs.clockLabelColorInput.value; raw.clockTimeColor = inputs.clockTimeColorInput.value; raw.manualTime = inputs.manualTimeInput.value; raw.brandTextColor = inputs.brandTextColorInput.value; raw.brandIconColor = inputs.brandIconColorInput.value; raw.percentColor = inputs.percentColorInput.value; raw.percentChargingColor = inputs.percentChargingColorInput.value; raw.percentLinkedToLevel = percentLinkedToLevelInput.checked; raw.percentChargingLinkedToIndicator = percentChargingLinkedToIndicatorInput.checked; raw.brandText = inputs.brandTextInput.value; raw.brandIcon = inputs.brandIconInput.value; raw.chargingActiveColor = inputs.chargingActiveColorInput.value; raw.chargingIdleColor = inputs.chargingIdleColorInput.value; raw.chargingTextColor = inputs.chargingTextColorInput.value; raw.batteryShellColor = inputs.batteryShellColorInput.value; raw.chargingIcon = inputs.chargingIconInput.value; raw.levelHighColor = inputs.levelHighColorInput.value; raw.levelMediumColor = inputs.levelMediumColorInput.value; raw.levelWarningColor = inputs.levelWarningColorInput.value; raw.levelLowColor = inputs.levelLowColorInput.value; raw.levelCriticalColor = inputs.levelCriticalColorInput.value; raw.criticalThreshold = inputs.criticalThresholdInput.value; return sanitizeCustomization(raw); }
 function fitTextToBounds(el, max, min) { if (!el) return; el.style.fontSize = `${max}px`; if (!el.textContent.trim()) return; let size = max; while (size > min && (el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight)) { size -= 1; el.style.fontSize = `${size}px`; } }
 function applyTextSizing() { fitTextToBounds(brandLogoGlyph, 34, 8); fitTextToBounds(bolt, 36, 9); }
@@ -386,12 +416,23 @@ function applyCustomization(customization, syncInputs = true) {
   setRootVariable("--brand-shadow", `drop-shadow(0 0 16px ${withAlpha(c.chargingActiveColor, dark ? 0.2 : 0.34)})`);
   setRootVariable("--clock-glow", `0 0 16px ${withAlpha(clockTimeColor, dark ? 0.24 : 0.16)}`);
   brandLogoText.textContent = c.brandText;
-  brandLogoGlyph.textContent = c.brandIcon;
-  brandMark.classList.toggle("has-custom-icon", c.brandIcon !== "");
+  brandLogoGlyph.textContent = "";
+  brandLogoImage.src = "logo.svg";
+  brandLogoImage.alt = "Logo Batterie en Grand";
+  brandMark.classList.remove("has-custom-icon", "has-custom-image");
+  if (resolveBrandIconMode(c.brandIcon) === "image") {
+    brandLogoImage.src = c.brandIcon;
+    brandLogoImage.alt = c.brandText || "Icone personnalisee";
+    brandMark.classList.add("has-custom-image");
+  } else if (resolveBrandIconMode(c.brandIcon) === "glyph") {
+    brandLogoGlyph.textContent = c.brandIcon;
+    brandMark.classList.add("has-custom-icon");
+  }
   bolt.textContent = c.chargingIcon;
-  levelLowColorLabel.textContent = `${c.criticalThreshold}% et +`;
-  levelCriticalColorLabel.textContent = `Moins de ${c.criticalThreshold}%`;
+  levelLowColorLabel.textContent = c.criticalThreshold === null ? "Moins de 35%" : `${c.criticalThreshold}% et +`;
+  levelCriticalColorLabel.textContent = c.criticalThreshold === null ? "Critique desactive" : `Moins de ${c.criticalThreshold}%`;
   if (syncInputs) syncInputsWithCustomization(c);
+  refreshManualClockOffset();
   updateHistoryButtons();
   updateClock();
   applyTextSizing();
@@ -412,7 +453,20 @@ function setTimezoneDropdownOpen(open) {
 }
 function applyTheme(theme) { document.documentElement.classList.toggle("theme-dark", theme === "dark"); themeLightButton.setAttribute("aria-pressed", String(theme !== "dark")); themeDarkButton.setAttribute("aria-pressed", String(theme === "dark")); applyCustomization(activeCustomization); }
 function getZoneDateParts(zone) { const parts = new Intl.DateTimeFormat("en-CA", { timeZone: zone === WORLD_TIME_ZONE ? "UTC" : zone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(getCurrentReferenceDate()); const val = t => parts.find(p => p.type === t)?.value || "00"; return { year: +val("year"), month: +val("month"), day: +val("day"), hour: +val("hour"), minute: +val("minute"), second: +val("second") }; }
-function getDisplayParts() { const p = getZoneDateParts(activeZone); const manual = parseManualTime(activeCustomization.manualTime); return manual ? { ...p, ...manual } : p; }
+function refreshManualClockOffset() {
+  const manual = parseManualTime(activeCustomization.manualTime);
+  if (!manual) {
+    manualClockOffsetMs = null;
+    return;
+  }
+
+  const zoneParts = getZoneDateParts(activeZone);
+  manualClockOffsetMs = getPartsPseudoUtcMs({ ...zoneParts, ...manual }) - getPartsPseudoUtcMs(zoneParts);
+}
+function getDisplayParts() {
+  const zoneParts = getZoneDateParts(activeZone);
+  return manualClockOffsetMs === null ? zoneParts : getPseudoUtcMsParts(getPartsPseudoUtcMs(zoneParts) + manualClockOffsetMs);
+}
 function formatDateParts(parts) { const weekday = WEEKDAY_NAMES[new Date(Date.UTC(parts.year, parts.month - 1, parts.day)).getUTCDay()]; const label = `${weekday} ${parts.day} ${MONTH_NAMES[parts.month - 1]} ${parts.year}`; return label.charAt(0).toUpperCase() + label.slice(1); }
 function updateClock() { const parts = getDisplayParts(); clockDate.textContent = formatDateParts(parts); clockTime.textContent = formatHms(parts); clockLabel.textContent = activeZone === WORLD_TIME_ZONE ? "HEURE MONDIALE - UTC" : `HEURE ACTUELLE - ${getZoneDisplayName(activeZone).toUpperCase()}`; }
 async function syncTimeFromWorldService() { if (syncRequest) return syncRequest; syncRequest = fetch(WORLD_TIME_API_URL, { cache: "no-store", credentials: "omit", mode: "cors", redirect: "error", referrerPolicy: "no-referrer" }).then(r => r.ok ? r.json() : Promise.reject()).then(data => { const ms = Date.parse(data.utc_datetime || data.datetime); if (!Number.isNaN(ms)) { syncedUtcMs = ms; syncedAtPerfMs = performance.now(); renderTimezoneOptions(); updateClock(); } }).catch(() => { if (syncedUtcMs === null) updateClock(); }).finally(() => { syncRequest = null; }); return syncRequest; }
@@ -441,30 +495,74 @@ function renderTimezoneOptions() {
     timezoneResults.appendChild(button);
   });
 }
-function getBatteryColor(level) { if (level >= 80) return activeCustomization.levelHighColor; if (level >= 50) return activeCustomization.levelMediumColor; if (level >= 35) return activeCustomization.levelWarningColor; if (level >= activeCustomization.criticalThreshold) return activeCustomization.levelLowColor; return activeCustomization.levelCriticalColor; }
+function getBatteryColor(level) {
+  const criticalThreshold = getCriticalThresholdValue();
+  if (level >= 80) return activeCustomization.levelHighColor;
+  if (level >= 50) return activeCustomization.levelMediumColor;
+  if (level >= 35) return activeCustomization.levelWarningColor;
+  if (criticalThreshold === null || level >= criticalThreshold) return activeCustomization.levelLowColor;
+  return activeCustomization.levelCriticalColor;
+}
 function clearCriticalWarnings() {
   warningOverlay.innerHTML = "";
   warningOverlay.setAttribute("aria-hidden", "true");
   if (criticalWarningIntervalId) { clearInterval(criticalWarningIntervalId); criticalWarningIntervalId = null; }
   if (criticalWarningStopTimeoutId) { clearTimeout(criticalWarningStopTimeoutId); criticalWarningStopTimeoutId = null; }
 }
+function rectanglesOverlap(a, b, gap = 18) {
+  return !(a.right + gap < b.left || a.left - gap > b.right || a.bottom + gap < b.top || a.top - gap > b.bottom);
+}
+function placeWarningChip(chip) {
+  const overlayRect = warningOverlay.getBoundingClientRect();
+  const chipWidth = chip.offsetWidth;
+  const chipHeight = chip.offsetHeight;
+  const minLeft = 24;
+  const minTop = 24;
+  const maxLeft = Math.max(minLeft, overlayRect.width - chipWidth - 24);
+  const maxTop = Math.max(minTop, overlayRect.height - chipHeight - 24);
+  const existingRects = [...warningOverlay.querySelectorAll(".warning-chip")]
+    .filter(node => node !== chip)
+    .map(node => node.getBoundingClientRect());
+  let fallbackBox = { left: minLeft, top: minTop, right: minLeft + chipWidth, bottom: minTop + chipHeight };
+  let lowestOverlapCount = Number.POSITIVE_INFINITY;
+
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const left = Math.round(minLeft + Math.random() * Math.max(0, maxLeft - minLeft));
+    const top = Math.round(minTop + Math.random() * Math.max(0, maxTop - minTop));
+    const candidate = { left, top, right: left + chipWidth, bottom: top + chipHeight };
+    const overlapCount = existingRects.filter(rect => rectanglesOverlap(candidate, rect)).length;
+    if (!overlapCount) {
+      chip.style.left = `${left}px`;
+      chip.style.top = `${top}px`;
+      return;
+    }
+    if (overlapCount < lowestOverlapCount) {
+      lowestOverlapCount = overlapCount;
+      fallbackBox = candidate;
+    }
+  }
+
+  chip.style.left = `${fallbackBox.left}px`;
+  chip.style.top = `${fallbackBox.top}px`;
+}
 function spawnCriticalWarning() {
   const chip = document.createElement("div");
   chip.className = "warning-chip";
   chip.textContent = WARNING_MESSAGES[Math.floor(Math.random() * WARNING_MESSAGES.length)];
-  chip.style.left = `${8 + Math.random() * 74}%`;
-  chip.style.top = `${10 + Math.random() * 72}%`;
+  chip.style.visibility = "hidden";
   chip.style.transform = `rotate(${Math.round(Math.random() * 24 - 12)}deg)`;
   warningOverlay.appendChild(chip);
+  placeWarningChip(chip);
+  chip.style.visibility = "";
   warningOverlay.setAttribute("aria-hidden", "false");
-  setTimeout(() => { chip.remove(); if (!warningOverlay.children.length && !criticalAlertActive) warningOverlay.setAttribute("aria-hidden", "true"); }, 2600);
+  setTimeout(() => { chip.remove(); if (!warningOverlay.children.length && !criticalAlertActive) warningOverlay.setAttribute("aria-hidden", "true"); }, CRITICAL_WARNING_TAIL_MS);
 }
 function startCriticalWarningVisuals(durationMs) {
   clearCriticalWarnings();
   criticalAlertActive = true;
   spawnCriticalWarning();
   criticalWarningIntervalId = setInterval(spawnCriticalWarning, 420);
-  criticalWarningStopTimeoutId = setTimeout(() => { criticalAlertActive = false; if (criticalWarningIntervalId) { clearInterval(criticalWarningIntervalId); criticalWarningIntervalId = null; } }, durationMs);
+  criticalWarningStopTimeoutId = setTimeout(() => { criticalAlertActive = false; if (criticalWarningIntervalId) { clearInterval(criticalWarningIntervalId); criticalWarningIntervalId = null; } }, durationMs + CRITICAL_WARNING_TAIL_MS);
 }
 function announceCriticalBattery() {
   const message = "Attention vous avez atteint le seuil critique de la batterie, nous vous prions de bien vouloir recharger votre appareil";
@@ -472,13 +570,14 @@ function announceCriticalBattery() {
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(message);
   utterance.lang = "fr-FR";
+  utterance.voice = pickPreferredMaleVoice();
   utterance.rate = 0.94;
   utterance.onstart = () => startCriticalWarningVisuals(Math.max(message.length * 70, 5000));
-  utterance.onend = utterance.onerror = () => { criticalAlertActive = false; };
   window.speechSynthesis.speak(utterance);
 }
 function updateCriticalAlertState(snapshot, level) {
-  const critical = !snapshot.charging && level < activeCustomization.criticalThreshold;
+  const criticalThreshold = getCriticalThresholdValue();
+  const critical = criticalThreshold !== null && !snapshot.charging && level < criticalThreshold;
   if (critical && !criticalAlertActive) return announceCriticalBattery();
   if (!critical) { criticalAlertActive = false; clearCriticalWarnings(); if ("speechSynthesis" in window) window.speechSynthesis.cancel(); }
 }
@@ -495,13 +594,27 @@ function updateBatteryDisplay(snapshot) {
     leftFill.style.background = activeCustomization.chargingIdleColor;
     bolt.style.display = "none";
     percent.style.color = activeCustomization.percentLinkedToLevel ? batteryColor : activeCustomization.percentColor;
-    percent.classList.toggle("low-battery-alert", level < activeCustomization.criticalThreshold);
+    percent.classList.toggle("low-battery-alert", getCriticalThresholdValue() !== null && level < getCriticalThresholdValue());
   }
   bolt.style.color = activeCustomization.chargingTextColor;
   rightFill.style.height = `${level}%`;
   rightFill.style.background = batteryColor;
   rightBubbles.style.setProperty("--bubble-color", batteryColor);
   updateCriticalAlertState(snapshot, level);
+}
+
+brandLogoImage?.addEventListener("error", () => {
+  brandLogoImage.src = "logo.svg";
+  brandLogoImage.alt = "Logo Batterie en Grand";
+  if (resolveBrandIconMode(activeCustomization.brandIcon) === "image") {
+    brandMark.classList.remove("has-custom-image");
+  }
+});
+
+if ("speechSynthesis" in window) {
+  const preloadVoices = () => window.speechSynthesis.getVoices();
+  preloadVoices();
+  window.speechSynthesis.addEventListener?.("voiceschanged", preloadVoices);
 }
 
 [timezoneToggle, timezoneDropdown, timezoneSearchInput, timezoneResults, paletteButton, palettePanel, themeLightButton, themeDarkButton].forEach(el => {
@@ -515,6 +628,7 @@ timezoneResults.addEventListener("click", event => {
   activeZone = button.dataset.zone;
   saveTimezone(activeZone);
   renderTimezoneOptions();
+  refreshManualClockOffset();
   updateClock();
   setTimezoneDropdownOpen(false);
 });
